@@ -109,20 +109,32 @@ def condition_yaw(heading, relative=False):
 import argparse
 parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
 parser.add_argument('--connect', help="Vehicle connection target string.")
+
+
+parser.add_argument('--connect2', help="Second vehicle target string.")
+
 args = parser.parse_args()
 
 # aquire connection_string
 connection_string = args.connect
+connection_string2 = args.connect2
 
 # Exit if no connection string specified
 if not connection_string:
-    sys.exit('Please specify connection string')
+    sys.exit('Please specify connection string for main vehicle')
+
+if not connection_string2:
+    sys.exit('Please specify connection string for second vehicle')
 
 # Connect to the Vehicle
-print('Connecting to vehicle on: %s' % connection_string)
+print('Connecting to main vehicle on: %s' % connection_string)
 vehicle = connect(connection_string, wait_ready=True)
+print('Succesfully connected to main vehicle')
 
-print('Succesfully connected to vehicle')
+print('Connecting to second vehicle on: %s' %connection_string2)
+vehicle2 = connect(connection_string2, wait_ready=True)
+print('Succesfully connected to second vehicle')
+
 
 """
 Listens for RC_CHANNELS mavlink messages with the goal of determining when the RCIN_4 joystick
@@ -133,20 +145,32 @@ def rc_listener(self, name, message):
     global rcin_4_center
     rcin_4_center = (message.chan4_raw < 1550 and message.chan4_raw > 1450)
 
+@vehicle2.on_message('RC_CHANNELS')
+def rc_listener(self, name, message):
+    global rcin_4_center
+    rcin_4_center = (message.chan4_raw < 1550 and message.chan4_raw > 1450)
 
 if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     vehicle.mode = VehicleMode("ALT_HOLD")
 
+if vehicle2.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
+    vehicle.mode = VehicleMode("ALT_HOLD")
+    
+    
 # Wait for pilot before proceeding
 print('Waiting for safety pilot to arm...')
 
 # Wait until safety pilot arms drone
 while not vehicle.armed:
     time.sleep(1)
-    x = vehicle.battery
+    x = vehicle.armed
     print(x)
-
-
+while not vehicle2.armed:
+    time.sleep(3)
+    y = vehicle2.armed
+    print(y)
+    print('vehicle 2')
+    
 print('Armed...')
 vehicle.mode = VehicleMode("GUIDED")
 
