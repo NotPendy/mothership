@@ -105,17 +105,15 @@ def condition_yaw(heading, relative=False):
     # delay to wait until yaw of copter is at desired yaw angle
     time.sleep(3)
 
-# Set up option parsing to get connection string and mission plan file
+# Set up option parsing to get connection strings
 import argparse
 parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
 parser.add_argument('--connect', help="Vehicle connection target string.")
-
-
 parser.add_argument('--connect2', help="Second vehicle target string.")
 
 args = parser.parse_args()
 
-# aquire connection_string
+# aquire connection_strings
 connection_string = args.connect
 connection_string2 = args.connect2
 
@@ -158,21 +156,17 @@ if vehicle2.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     
     
 # Wait for pilot before proceeding
-print('Waiting for safety pilot to arm...')
+print('Waiting for safety pilot to arm both vehicles')
 
 # Wait until safety pilot arms drone
 while not vehicle.armed:
     time.sleep(1)
-    x = vehicle.armed
-    print(x)
 while not vehicle2.armed:
-    time.sleep(3)
-    y = vehicle2.armed
-    print(y)
-    print('vehicle 2')
+    time.sleep(1)
     
 print('Armed...')
 vehicle.mode = VehicleMode("GUIDED")
+vehicle2.mode = VehicleMode("GUIDED")
 
 if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
