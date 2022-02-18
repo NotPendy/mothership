@@ -24,13 +24,33 @@ ALTITUDE_REACH_THRESHOLD = 0.95
 WAYPOINT_LIMIT = 1
 # Variable to keep track of if joystick to arm has returned to center
 rcin_4_center = False
-def safe_to_fly():
+# in a range of 0 to 1 the percentage of battery needed to fly
+BATTERY_SAFE = 0.5
+# variable to determine how much of a difference in acceleration two objects can be to not be considered connected and flying together
+ACCELERATE_DIFFERENCE = 1
+# variable to determine how muhc of a difference in posistion two objects can be and not be considered connected and flying together
+POSITION_DIFFERENCE = 1
+
+def drone_connected(drone1, drone2):
     """
-    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. If the battery level is less then this the function will return FALSE, else it will return TRUE
+    passes two vehicle objects in and determines based on location and acceleration if they are connected and flying as one object. 
+    return True if connected, return False if not connected
     """
-    blevel = vehicle.battery.level
-    print(blevel)
-    return
+    pos_difference = abs(drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat) + abs(drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon) + abs(drone1.location.global_relative_frame.alt - drone2.location.global_relative_frame.alt)
+    if(pos_difference < POSITION_DIFFERENCE):
+        return True
+    
+
+
+
+def safe_to_fly(drone):
+    """
+    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. If the battery level is less then this the function will return FALSE, else 	   it will return TRUE
+    """
+    if(drone.battery.level <= BATTERY_SAFE):
+        return False
+    else:
+        return True
 
 def get_distance_metres(aLocation1, aLocation2):
     """
@@ -152,12 +172,16 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     vehicle.mode = VehicleMode("ALT_HOLD")
 
 if vehicle2.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
-    vehicle.mode = VehicleMode("ALT_HOLD")
+    vehicle2.mode = VehicleMode("ALT_HOLD")
     
     
 # Wait for pilot before proceeding
 print('Waiting for safety pilot to arm both vehicles')
 
+# while loop to test functions
+"""while True:
+	drone_connected(vehicle, vehicle2)
+"""
 # Wait until safety pilot arms drone
 while not vehicle.armed:
     time.sleep(1)
@@ -188,6 +212,8 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
     while True:
          # Break just below target altitude.
+        print(drone_connected(vehicle, vehicle2))
+        
         if vehicle.location.global_relative_frame.alt >= TARGET_ALTITUDE * ALTITUDE_REACH_THRESHOLD:
             break
         time.sleep(0.5)
