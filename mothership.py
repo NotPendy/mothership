@@ -27,7 +27,7 @@ rcin_4_center = False
 # in a range of 0 to 1 the percentage of battery needed to fly
 BATTERY_SAFE = 0.5
 # variable to determine how much of a difference in acceleration two objects can be to not be considered connected and flying together
-ACCELERATE_DIFFERENCE = 1
+VELOCITY_DIFFERENCE = 1
 # variable to determine how muhc of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
 
@@ -37,9 +37,13 @@ def drone_connected(drone1, drone2):
     return True if connected, return False if not connected
     """
     pos_difference = abs(drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat) + abs(drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon) + abs(drone1.location.global_relative_frame.alt - drone2.location.global_relative_frame.alt)
-    if(pos_difference < POSITION_DIFFERENCE):
+    vel_difference = abs(drone1.velocity[0] - drone2.velocity[0]) + abs(drone1.velocity[1] - drone2.velocity[1]) + abs(drone1.velocity[2] - drone2.velocity[2]) 
+
+    if((pos_difference < POSITION_DIFFERENCE) and (vel_difference < VELOCITY_DIFFERENCE)):
         return True
-    
+
+    else:
+        return False
 
 
 
