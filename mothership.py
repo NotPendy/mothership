@@ -49,7 +49,8 @@ def drone_connected(drone1, drone2):
 
 def safe_to_fly(drone):
     """
-    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. If the battery level is less then this the function will return FALSE, else 	   it will return TRUE
+    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. 
+    If the battery level is less then this the function will return FALSE, else it will return TRUE
     """
     if(drone.battery.level <= BATTERY_SAFE):
         return False

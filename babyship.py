@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 """
-Code for the Babyship drone. Currently connects to the TCP address specified when running program with --connect argument, takes off to a target altitude, lands back at the same position, and then disarms to end program
+Code for the Babyship drone. Currently connects to the TCP address specified when running program with --connect argument, takes off to a target altitude, 
+sets the parameters for throw mode, sets mode to throw mode, turns off the motors and lets drone catch it self, and then land at a fixed position.
+
+currently the issue is i can not set the mode to throw form guided as its already flying. This may not be an issue if its not powered by its own power but may
+need to start teleported in the air to do this.
 """
 
 from __future__ import print_function
@@ -16,7 +20,7 @@ from pymavlink import mavutil
 # Size of square in meters
 SQUARE_SIZE = 10
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 3
+TARGET_ALTITUDE = 20
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
@@ -24,13 +28,18 @@ ALTITUDE_REACH_THRESHOLD = 0.95
 WAYPOINT_LIMIT = 1
 # Variable to keep track of if joystick to arm has returned to center
 rcin_4_center = False
-def safe_to_fly():
+# in a range of 0 to 1 the percentage of battery needed to fly
+BATTERY_SAFE = 0.5
+
+def safe_to_fly(drone):
     """
-    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. If the battery level is less then this the function will return FALSE, else it will return TRUE
+    Gets the current battery voltage, current, and level. Compares battery level to a set stop point called BATTERY_LIMIT. 
+    If the battery level is less then this the function will return FALSE, else it will return TRUE
     """
-    blevel = vehicle.battery.level
-    print(blevel)
-    return
+    if(drone.battery.level <= BATTERY_SAFE):
+        return False
+    else:
+        return True
 
 def get_distance_metres(aLocation1, aLocation2):
     """
@@ -175,6 +184,23 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
         time.sleep(0.5)
     # yaw north
     condition_yaw(0)
+
+    print("setting parameters to throw")
+
+    vehicle.parameters['THROW_MOT_START']=0
+    vehicle.parameters['THROW_TYPE']=1  
+    vehicle.parameters['NEXT_MODE']=4
+    print("parameters set")
+
+    time.sleep(2)
+
+    vehicle.mode = VehicleMode("THROW")
+    print("setting mode throw")
+
+
+    time.sleep(5)
+
+
 
 
 
