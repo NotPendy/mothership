@@ -187,6 +187,7 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
     print("setting parameters to throw")
 
+    #sets the parameters for throw mode, THROW_MOT_START = 0 for no spinning of motors, THROW_TYPE = 1 for dropping from 10 meters up or higher, and NEXT_MODE = 4 for guided mode after stabilize
     vehicle.parameters['THROW_MOT_START']=0
     vehicle.parameters['THROW_TYPE']=1  
     vehicle.parameters['NEXT_MODE']=4
