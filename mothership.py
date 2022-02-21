@@ -187,6 +187,7 @@ print('Waiting for safety pilot to arm both vehicles')
 """while True:
 	drone_connected(vehicle, vehicle2)
 """
+
 # Wait until safety pilot arms drone
 while not vehicle.armed:
     time.sleep(1)
@@ -196,6 +197,8 @@ while not vehicle2.armed:
 print('Armed...')
 vehicle.mode = VehicleMode("GUIDED")
 vehicle2.mode = VehicleMode("GUIDED")
+
+#takes off the mothership to  target altitude and stops once it reaches at least 95% of that height. 
 
 if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
@@ -216,14 +219,25 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     vehicle.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
 
     while True:
-         # Break just below target altitude.
-        print(drone_connected(vehicle, vehicle2))
-        
+         # Break just below target altitude.        
         if vehicle.location.global_relative_frame.alt >= TARGET_ALTITUDE * ALTITUDE_REACH_THRESHOLD:
             break
         time.sleep(0.5)
     # yaw north
     condition_yaw(0)
+
+"""
+code here for mothership dropping the babyship
+waiting at the current location until babyship changes a parameter indicating it wants to be picked up
+fly to the location of babyship at the same altitude
+come down at the location of the babyships gps location 10 feet south and 10 inches off the ground
+have camera locate the light on top of the loops
+fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
+close the servo and take off
+fly to set altitude
+return to home and land
+"""
+
 
 
 
