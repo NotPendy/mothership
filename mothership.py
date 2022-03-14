@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Code for the Mothership drone. Currently connects to the TCP address specified when running program with --connect argument, takes off to a target altitude, lands back at the same position, and then disarms to end program
+Code for the Mothership drone. Currently connects to the TCP address specified when running program with --connect argument, connects to the second drone on --connect2 argument takes off to a target altitude, lands back at the same position, and then disarms to end program
 """
 
 from __future__ import print_function
@@ -28,8 +28,35 @@ rcin_4_center = False
 BATTERY_SAFE = 0.5
 # variable to determine how much of a difference in acceleration two objects can be to not be considered connected and flying together
 VELOCITY_DIFFERENCE = 1
-# variable to determine how muhc of a difference in posistion two objects can be and not be considered connected and flying together
+# variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
+#height the mothership should be at when picking up the babyship on the ground in meters
+PICKUP_HEIGHT = 1
+#distance mothership should be from the babyship to begin locating it with the camera in meters
+PICKUP_DISTANCE = 15
+
+def meter_offset_to_coords(offset, drone):
+    """
+    passes an array "offset" with three values [x, y, z] and adds it to the current gps position of the vehicle drone
+    The function is useful when you want to move the vehicle around specifying locations relative to 
+    the current vehicle position.
+    The algorithm is relatively accurate over small distances (10m within 1km) except close to the poles.
+    For more information see:
+    http://gis.stackexchange.com/questions/2951/algorithm-for-offsetting-a-latitude-longitude-by-some-amount-of-meters
+
+    """
+
+    earth_radius=6378137.0 #Radius of "spherical" earth
+    #Coordinate offsets in radians
+    dLat = offset[0]/earth_radius
+    dLon = offset[1]/(earth_radius*math.cos(math.pi*drone.location.global_relative_frame.lat/180))
+
+    #New position in decimal degrees
+    newlat = drone.location.global_relative_frame.lat + (dLat * 180/math.pi)
+    newlon = drone.location.global_relative_frame.lon + (dLon * 180/math.pi)
+    coordinates = [newlat, newlon, offset[2]]
+    return coordinates
+
 
 def drone_connected(drone1, drone2):
     """
@@ -45,6 +72,16 @@ def drone_connected(drone1, drone2):
     else:
         return False
 
+
+def pickup_position(drone1, drone2):
+    """
+    function to find the exact position mothership should be at when picking up the babyship. 
+    """
+    relative_lat = drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat - PICKUP_DISTANCE
+    relative_lon = drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon
+
+    pickup_location = [relative_lat, relative_lon, PICKUP_HEIGHT]
+    return pickup_location
 
 
 def safe_to_fly(drone):
@@ -68,34 +105,13 @@ def get_distance_metres(aLocation1, aLocation2):
     dlong = aLocation2.lon - aLocation1.lon
     return math.sqrt((dlat*dlat) + (dlong*dlong)) * 1.113195e5
 
-def distanceToWaypoint(coordinates):
+def distanceToWaypoint(coordinates, drone):
     """
-    Returns distance between vehicle and specified coordinates
+    Returns distance between vehicle and specified coordinates as GlobalRelativeFrame objects
     """
-    distance = get_distance_metres(vehicle.location.global_frame, coordinates)
+    distance = get_distance_metres(drone.location.global_frame, coordinates)
     return distance
-
-def get_location_metres(original_location, dNorth, dEast, altitude):
-    """
-    Returns a LocationGlobal object containing the latitude/longitude `dNorth` and `dEast` metres from the 
-    specified `original_location`.
-
-    The function is useful when you want to move the vehicle around specifying locations relative to 
-    the current vehicle position.
-    The algorithm is relatively accurate over small distances (10m within 1km) except close to the poles.
-    For more information see:
-    http://gis.stackexchange.com/questions/2951/algorithm-for-offsetting-a-latitude-longitude-by-some-amount-of-meters
-    """
-    earth_radius=6378137.0 #Radius of "spherical" earth
-    #Coordinate offsets in radians
-    dLat = dNorth/earth_radius
-    dLon = dEast/(earth_radius*math.cos(math.pi*original_location.lat/180))
-
-    #New position in decimal degrees
-    newlat = original_location.lat + (dLat * 180/math.pi)
-    newlon = original_location.lon + (dLon * 180/math.pi)
-    return LocationGlobalRelative(newlat, newlon, altitude)
-
+    
 def condition_yaw(heading, relative=False):
     """
     Send MAV_CMD_CONDITION_YAW message to point vehicle at a specified heading (in degrees).
@@ -179,14 +195,13 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
 if vehicle2.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     vehicle2.mode = VehicleMode("ALT_HOLD")
     
-    
+
+
+
+#vehicle.parameters['SYSID_THISMAV'] = 1
 # Wait for pilot before proceeding
 print('Waiting for safety pilot to arm both vehicles')
 
-# while loop to test functions
-"""while True:
-	drone_connected(vehicle, vehicle2)
-"""
 
 # Wait until safety pilot arms drone
 while not vehicle.armed:
@@ -219,15 +234,31 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     vehicle.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
 
     while True:
-         # Break just below target altitude.        
+         # Break just below target altitude.
         if vehicle.location.global_relative_frame.alt >= TARGET_ALTITUDE * ALTITUDE_REACH_THRESHOLD:
             break
-        time.sleep(0.5)
+        time.sleep(.5)
     # yaw north
     condition_yaw(0)
 
 """
 code here for mothership dropping the babyship
+"""
+location_offset_meters = pickup_position(vehicle, vehicle2)
+pickup_coordinates = meter_offset_to_coords(location_offset_meters, vehicle)
+print("sending mothership to babyship")
+
+vehicle.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
+
+while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), vehicle) > WAYPOINT_LIMIT:
+    time.sleep(.5)
+
+print("Mothership in position to pickup babyship")
+
+
+
+
+"""
 waiting at the current location until babyship changes a parameter indicating it wants to be picked up
 fly to the location of babyship at the same altitude
 come down at the location of the babyships gps location 10 feet south and 10 inches off the ground
