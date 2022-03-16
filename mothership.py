@@ -35,6 +35,23 @@ PICKUP_HEIGHT = 1
 #distance mothership should be from the babyship to begin locating it with the camera in meters
 PICKUP_DISTANCE = 15
 
+def send_mothership_to_babyship(mothership, babyship):
+    """
+    This function takes in two drones "mothership" and "babyship" and sends the mothership to the location of the babyship.
+    Function does not end until the vehicle is within the the waypoint limit.
+    """
+    location_offset_meters = pickup_position(mothership, babyship)
+    pickup_coordinates = meter_offset_to_coords(location_offset_meters, vehicle)
+    print("sending mothership to babyship general area")
+
+    mothership.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
+
+    while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), vehicle) > WAYPOINT_LIMIT:
+        time.sleep(.5)
+
+    print("Mothership in position to pickup babyship")
+    return
+
 def meter_offset_to_coords(offset, drone):
     """
     passes an array "offset" with three values [x, y, z] and adds it to the current gps position of the vehicle drone
@@ -57,7 +74,6 @@ def meter_offset_to_coords(offset, drone):
     coordinates = [newlat, newlon, offset[2]]
     return coordinates
 
-
 def drone_connected(drone1, drone2):
     """
     passes two vehicle objects in and determines based on location and acceleration if they are connected and flying as one object. 
@@ -72,7 +88,6 @@ def drone_connected(drone1, drone2):
     else:
         return False
 
-
 def pickup_position(drone1, drone2):
     """
     function to find the exact position mothership should be at when picking up the babyship. 
@@ -82,7 +97,6 @@ def pickup_position(drone1, drone2):
 
     pickup_location = [relative_lat, relative_lon, PICKUP_HEIGHT]
     return pickup_location
-
 
 def safe_to_fly(drone):
     """
@@ -244,24 +258,17 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 """
 code here for mothership dropping the babyship
 """
-location_offset_meters = pickup_position(vehicle, vehicle2)
-pickup_coordinates = meter_offset_to_coords(location_offset_meters, vehicle)
-print("sending mothership to babyship")
 
-vehicle.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
-
-while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), vehicle) > WAYPOINT_LIMIT:
-    time.sleep(.5)
-
-print("Mothership in position to pickup babyship")
+while vehicle2.mode != VehicleMode("LAND"):
+    #waits until the mode of the bayship is set to "LAND" so the mothership knows when to go and pick it up
+    time.sleep(1) 
+#Once babyship is ready to be picked up the mothership is positioned away from babyship to allow the camera to find it
+send_mothership_to_babyship(vehicle,vehicle2)
 
 
 
 
 """
-waiting at the current location until babyship changes a parameter indicating it wants to be picked up
-fly to the location of babyship at the same altitude
-come down at the location of the babyships gps location 10 feet south and 10 inches off the ground
 have camera locate the light on top of the loops
 fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
 close the servo and take off
