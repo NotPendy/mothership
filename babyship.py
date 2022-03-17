@@ -31,6 +31,14 @@ WAYPOINT_LIMIT = 1
 rcin_4_center = False
 # in a range of 0 to 1 the percentage of battery needed to fly
 BATTERY_SAFE = 0.5
+# variable to determine how much of a difference in acceleration two objects can be to not be considered connected and flying together
+VELOCITY_DIFFERENCE = 1
+# variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
+POSITION_DIFFERENCE = 1
+#height the mothership should be at when picking up the babyship on the ground in meters
+PICKUP_HEIGHT = 1
+#distance mothership should be from the babyship to begin locating it with the camera in meters
+PICKUP_DISTANCE = 15
 
 def send_mothership_to_babyship(mothership, babyship):
     """
@@ -227,8 +235,22 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
         time.sleep(0.5)
     # yaw north
     condition_yaw(0)
-    offset = [random]
-    fly_location = 
+
+    #random location to test
+    offset = [25*random.random(), 25*random.random(), 5]
+    #non random location to test
+    #offset = [25, 25, 5]
+    fly_location = meter_offset_to_coords(offset, vehicle)
+    vehicle.simple_goto(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]))
+    print("babyship flying to the location")
+    while distanceToWaypoint(vehicle.location.global_relative_frame, LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])) > WAYPOINT_LIMIT:
+        time.sleep(.5)
+
+    print("babyship is in location")
+
+    time.sleep(5)
+
+
 
     #sets the parameters for throw mode, THROW_MOT_START = 0 for no spinning of motors, THROW_TYPE = 1 for dropping from 10 meters up or higher, and NEXT_MODE = 4 for guided mode after stabilize
     """
