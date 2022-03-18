@@ -65,7 +65,7 @@ class Frame_Processor:
 
     # endregion
 
-    # region [High-Level Algorithm]
+    # region [High-Level Algorithms]
 
     '''
         This function is called to process one frame of video.
