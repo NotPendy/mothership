@@ -20,7 +20,9 @@ class Vision_Controller :
         start video capture, drone connection
     '''
     def __init__(self) :
-        self.cam = cv2.VideoCapture(0)
+
+        # Initialize frame processor
+        self.frame_processor = Frame_Processor()
 
         try:
             print("Creating Drone Object")
@@ -58,8 +60,32 @@ class Vision_Controller :
 
     # region [Main Flow]
 
+    '''
+        Continually reads in frames of video and sends them out to be processed.
+        Uses output of frame processor to command the drone to move.
+    '''
     def image_loop(self) :
-        frame_processor = Frame_Processor()
+
+        #initialize video capture
+        cap = cv2.VideoCapture(0)
+
+        #check if capture opened correctly
+        if not cap.isOpened():
+            print("Cannot open camera")
+            return
         
+        #start frame read loop
+        while True :
+
+            #get frame
+            
+            #send frame to be processed
+            cmd_vel = self.frame_processor.process_frame_target_acquired()
+
+            #command drone to perform specified x
+        
+        #release video capture
+
+        cap.release()
 
     # endregion
