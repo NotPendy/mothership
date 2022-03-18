@@ -17,8 +17,8 @@ class Frame_Processor:
 
     # region [init]
 
-    X_DRIFT_TOLERANCE = .5
-    Y_DRIFT_TOLERANCE = .5
+    HORIZONTAL_DRIFT_TOLERANCE = .5
+    VERTICAL_DRIFT_TOLERANCE = .5
 
     MAX_YAW_RATE = np.pi / 2
     MAX_VERTICAL_SPEED = .1
@@ -72,7 +72,7 @@ class Frame_Processor:
         
         It returns the command that should be issued to the vehic
     '''
-    def process_frame(self, frame):
+    def process_frame_target_acquired(self, frame):
 
         #Run blob detection on frame
         self.__find_red_blobs__(frame)
@@ -100,18 +100,18 @@ class Frame_Processor:
         for r in self.red_keypoints:
             red_keypoint = red_keypoint if r.size < red_keypoint.size else r 
 
-        #get normalized x, y position of blob in frame
-        x_position_blob, y_position_blob = self.__get_blob_relative_position__(self.red_im, red_keypoint)
+        #get normalized x position of blob in frame
+        x_position_blob = self.__get_blob_relative_position__(self.red_im, red_keypoint)[0]
 
         #calculate commanded velocity based off of blob location in frame
         forward_rate = 0.0
-        vertical_rate = -MAX_VERTICAL_SPEED * y_position_blob
-        yaw_rate = -MAX_YAW_RATE * x_position_blob
+        vertical_rate = 0.0
+        yaw_rate = -self.MAX_YAW_RATE * x_position_blob
         cmd_vel = Commanded_Velocity(forward_rate, vertical_rate, yaw_rate)
 
         if modify_conditions :
             #if the red ball's position within frame is within tolerance, set centered_red flag to true
-            if math.fabs(x_position_blob) < CENTERED_TOLERANCE_HORIZONTAL and math.fabs(y_position_blob) < CENTERED_TOLERANCE_VERTICAL :
+            if math.fabs(x_position_blob) < self.CENTERED_TOLERANCE_HORIZONTAL :
                 self.centered_red = True
             else :
                 self.centered_red = False
