@@ -58,7 +58,7 @@ class Vision_Controller :
     
     # endregion
 
-    # region [Main Flow]
+    # region [High Level Algorithms]
 
     '''
         Continually reads in frames of video and sends them out to be processed.
@@ -76,16 +76,24 @@ class Vision_Controller :
         
         #start frame read loop
         while True :
-
             #get frame
-            
-            #send frame to be processed
-            cmd_vel = self.frame_processor.process_frame_target_acquired()
+            ret, frame = cap.read()
 
-            #command drone to perform specified x
+            # if frame is read correctly ret is True
+            if not ret:
+                print("Can't receive frame (stream end?). Exiting ...")
+                break
+
+            #send frame to be processed
+            cmd_vel = self.frame_processor.process_frame_target_acquired(frame)
+
+            #command drone to perform specified 
+
         
         #release video capture
 
         cap.release()
 
     # endregion
+
+    # region
