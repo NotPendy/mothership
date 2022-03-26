@@ -125,7 +125,7 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
 print("circling")
 for _ in range(10000) :
-    vehicle.send_mavlink(circle_msg(1,.1))
+    vehicle.send_mavlink(circle_msg(1,-.1))
     time.sleep(1)
 
 time.sleep(5)

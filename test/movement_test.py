@@ -79,6 +79,11 @@ def yaw_rate_msg(yaw_rate):
 
     return msg
 
+# endregion
+
+# region [Set Up]
+
+
 # Set up option parsing to get connection string and mission plan file
 import argparse
 parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
@@ -107,11 +112,6 @@ def rc_listener(self, name, message):
     global rcin_4_center
     rcin_4_center = (message.chan4_raw < 1550 and message.chan4_raw > 1450)
 
-
-# endregion
-
-
-# region [Set Up]
 
 if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     vehicle.mode = VehicleMode("ALT_HOLD")
