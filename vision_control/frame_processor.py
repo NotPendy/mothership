@@ -9,18 +9,17 @@
     information gets to the drone, it just uses these as input and output.
 '''
 
+from pickle import FALSE
 import cv2
 import math
+import time
 import numpy as np
 
 class Frame_Processor:
 
     # region [init]
 
-    HORIZONTAL_DRIFT_TOLERANCE = .5
-    VERTICAL_DRIFT_TOLERANCE = .5
-
-    MAX_YAW_RATE = np.pi / 2
+    MAX_YAW_RATE = np.pi / 8
     MAX_VERTICAL_SPEED = .1
     FORWARD_VELOCITY = .1
 
@@ -30,13 +29,13 @@ class Frame_Processor:
     '''
         Constructor sets up necessary blob detection parameters
     '''
-    def __init__(self):
+    def __init__(self, red_hsv_min = (0, 34, 0), red_hsv_max = (10,255,255)):
 
-        self.centered_red = False
+        self.centered_red_horizontally = False
 
         #hsv thresholds
-        self.red_hsv_min = (0, 34, 0)
-        self.red_hsv_max = (10, 255, 255)
+        self.red_hsv_min = red_hsv_min
+        self.red_hsv_max = red_hsv_max
 
         red_params = cv2.SimpleBlobDetector_Params()
 
@@ -67,29 +66,54 @@ class Frame_Processor:
 
     # region [High-Level Algorithms]
 
+    def process_frame_check_red(self, frame) :
+        self.__find_red_blobs__(frame)
+
+        return self.red_in_frame
+
+
+    def center_vertically(self, frame) :
+
+        #Run blob detection on frame
+        self.__find_red_blobs__(frame)
+
+        if not self.centered_red_vertically :
+            return self.__center_red__(horizontal=False)
+
+        else :
+            return self.__stop__()
+
     '''
         This function is called to process one frame of video.
         
-        It returns the command that should be issued to the vehic
+        It returns the velocity that should be commanded to the vehicle
     '''
-    def process_frame_target_acquired(self, frame):
+    def center_horizontally_and_advance(self, frame):
 
         #Run blob detection on frame
         self.__find_red_blobs__(frame)
 
         #If the camera is not centered on red, center on red
-        if not self.centered_red :
-            return self.__center_red__()
+        if not self.centered_red_horizontally :
+            return self.__center_red__(horizontal=True)
     
         return self.__advance__()
+
+    '''
+        resets all flags that may have been modified by frame processing
+    '''
+    def reset_flags(self) :
+        self.centered_red_horizontally = False
+
 
     # endregion
 
     # region [Primary Helpers]
+
     '''
         Commands drone to make necessary adjustments to center camera on red ball
     '''
-    def __center_red__(self, frame, clockwise = 1.0, modify_conditions = True, record = True) :
+    def __center_red__(self, horizontal, modify_conditions = True, record = True) :
 
         #if we don't detect a blob, seek
         if len(self.red_keypoints) == 0:
@@ -101,50 +125,64 @@ class Frame_Processor:
             red_keypoint = red_keypoint if r.size < red_keypoint.size else r 
 
         #get normalized x position of blob in frame
-        x_position_blob = self.__get_blob_relative_position__(self.red_im, red_keypoint)[0]
+        horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__(self.red_im, red_keypoint)
 
         #calculate commanded velocity based off of blob location in frame
         forward_rate = 0.0
-        vertical_rate = 0.0
-        yaw_rate = -self.MAX_YAW_RATE * x_position_blob
+        #TODO: are signs right on these?
+        vertical_rate = 0.0 if horizontal else self.MAX_VERTICAL_SPEED * vertical_position_blob
+        yaw_rate = -self.MAX_YAW_RATE * horizontal_position_blob if horizontal else 0.0
         cmd_vel = Commanded_Velocity(forward_rate, vertical_rate, yaw_rate)
 
-        if modify_conditions :
+        if modify_conditions and horizontal :
             #if the red ball's position within frame is within tolerance, set centered_red flag to true
-            if math.fabs(x_position_blob) < self.CENTERED_TOLERANCE_HORIZONTAL :
-                self.centered_red = True
+            if math.fabs(horizontal_position_blob) < self.CENTERED_TOLERANCE_HORIZONTAL :
+                self.centered_red_horizontally = True
             else :
-                self.centered_red = False
+                self.centered_red_horizontally = False
+        
+        elif modify_conditions and not horizontal :
+            #if the red ball's position within frame is within tolerance, set centered_red flag to true
+            if math.fabs(vertical_position_blob) < self.CENTERED_TOLERANCE_VERTICAL :
+                self.centered_red_vertically = True
+            else :
+                self.centered_red_vertically = False
 
         if record :
             #record value and time of last cmd_vel published
             self.last_cmd_vel = cmd_vel
-            self.last_cmd_vel_time = self.get_clock().now()
+            self.last_cmd_vel_time = time.time()
 
-        return cmd_vel
+        return cmd_vel, False
     
+
+    '''
+        Constructs and returns command for drone to move at the target blob, keeping the target blob
+        in its center of vision horizontally.
+    '''
     def __advance__(self, frame, clockwise = 1.0) :
 
         #if we don't detect a blob decide between following through and stopping
         if len(self.red_keypoints) == 0:
-            current_time = self.get_clock().now()
+            current_time = time.time()
 
             #If the time between now and the last commanded velocity is less than 1 second, follow through
-            if None is self.last_cmd_vel_time or self.__time_difference_seconds__( self.last_twist_time.to_msg(), current_time.to_msg() ) <= 1.0 :
-                return self.follow_through()
+            if None is self.last_cmd_vel_time or self.__time_difference_seconds__( self.last_cmd_vel_time, current_time ) <= 1.0 :
+                return self.__follow_through__()
             #otherwise, stop
             else :
+                self.centered_red_horizontally = False
                 return self.__stop__()
         
         #call center red to make any angular adjustments
-        cmd_vel = self.__center_red__(self, frame, record = False)
-        cmd_vel.forward = FORWARD_VELOCITY
+        cmd_vel = self.__center_red__(self, frame, modify_conditions=False, record = False)
+        cmd_vel.forward = self.FORWARD_VELOCITY
 
         #record value and time of last cmd_vel published
         self.last_cmd_vel = cmd_vel
-        self.last_cmd_vel_time = self.get_clock().now()
+        self.last_cmd_vel_time = time.time()
 
-        return cmd_vel
+        return cmd_vel, False
 
 
     # endregion
@@ -153,22 +191,32 @@ class Frame_Processor:
 
     '''
         Turn the drone to help it find the ball
+        sends out indication that drone has not stopped
     '''
     def __seek__(self, clockwise = 1.0) :
-        return Commanded_Velocity(0,0,-1.0*clockwise)
+        return Commanded_Velocity(0,0,-1.0*clockwise), False
 
+    '''
+        Tells the drone to follow through and repeat the last commanded velocity.
+        sends out indication that drone has not stopped
+    '''
+    def __follow_through__(self) :
+        return self.last_cmd_vel, False
+
+    '''
+        commands the drone to stop moving.
+        sends out indication that the drone has stopped
+    '''
     def __stop__(self) :
-        return Commanded_Velocity(0,0,0)
-
+        return Commanded_Velocity(0,0,0), True
 
     '''
         returns time difference in seconds
     '''
     def __time_difference_seconds__(self, start_time, end_time) :
         nanosec_in_sec = 10 ** 9
-        time_diff_nanosec = 1.0 * (end_time.nanosec -  start_time.nanosec)
-        time_diff_sec = 1.0 * (end_time.sec -  start_time.sec)
-        time_diff_sec += (time_diff_nanosec / nanosec_in_sec)
+        time_diff_nanosec = 1.0 * (end_time -  start_time)
+        time_diff_sec = time_diff_nanosec / nanosec_in_sec
         return time_diff_sec
 
     # endregion
@@ -179,9 +227,7 @@ class Frame_Processor:
         Takes in image and finds keypoints. 
 
     '''
-    def __find_red_blobs__(self, frame) :
-        # save image width for later
-        self.image_width = frame.shape[1] * 1.0
+    def __find_red_blobs__(self, frame, show = False) :
         self.red_im = frame
 
         red_hsv = cv2.cvtColor(self.red_im, cv2.COLOR_BGR2HSV)
@@ -218,7 +264,7 @@ class Frame_Processor:
 '''
 class Commanded_Velocity :
 
-    def __init__(self, forward, downward, yaw) :
+    def __init__(self, forward, downward, yaw_rate) :
         self.forward = forward
         self.downward = downward
-        self.yaw = yaw
+        self.yaw_rate = yaw_rate
