@@ -5,3 +5,7 @@
 *.tlog.raw
 *.raw
 **/terrain
+*.parm
+*/__pycache__/
+
+*/sitl.sh
