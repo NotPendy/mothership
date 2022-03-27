@@ -14,6 +14,8 @@ import cv2
 import math
 import time
 import numpy as np
+import imutils
+from collections import deque
 
 class Frame_Processor:
 
@@ -29,9 +31,15 @@ class Frame_Processor:
     '''
         Constructor sets up necessary blob detection parameters
     '''
-    def __init__(self, red_hsv_min = (0, 34, 0), red_hsv_max = (10,255,255)):
+    def __init__(self, red_hsv_min = (0, 34, 0), red_hsv_max = (10,255,255), rotating_seek = True):
+
+        self.rotating_seek = rotating_seek
 
         self.centered_red_horizontally = False
+        self.centered_red_vertically = False
+        self.red_in_frame = False
+
+        self.pts = deque(maxlen=10)
 
         #hsv thresholds
         self.red_hsv_min = red_hsv_min
@@ -88,16 +96,18 @@ class Frame_Processor:
         
         It returns the velocity that should be commanded to the vehicle
     '''
-    def center_horizontally_and_advance(self, frame):
+    def center_horizontally_and_advance(self, frame, show = False, advance = True):
 
         #Run blob detection on frame
-        self.__find_red_blobs__(frame)
+        self.__find_red_blobs__(frame, show=show)
+
+        if not advance : self.centered_red_horizontally = False
 
         #If the camera is not centered on red, center on red
         if not self.centered_red_horizontally :
             return self.__center_red__(horizontal=True)
     
-        return self.__advance__()
+        return self.__advance__(frame)
 
     '''
         resets all flags that may have been modified by frame processing
@@ -116,22 +126,20 @@ class Frame_Processor:
     def __center_red__(self, horizontal, modify_conditions = True, record = True) :
 
         #if we don't detect a blob, seek
-        if len(self.red_keypoints) == 0:
+        if not self.red_in_frame:
+            print("seeking")
             return self.__seek__()
 
-        #get biggest red keypoint (we'll assume the ball is the biggest red blob in frame)
-        red_keypoint = self.red_keypoints[0]
-        for r in self.red_keypoints:
-            red_keypoint = red_keypoint if r.size < red_keypoint.size else r 
-
         #get normalized x position of blob in frame
-        horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__(self.red_im, red_keypoint)
+        horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__()
+
+        print(horizontal_position_blob)
 
         #calculate commanded velocity based off of blob location in frame
         forward_rate = 0.0
         #TODO: are signs right on these?
         vertical_rate = 0.0 if horizontal else self.MAX_VERTICAL_SPEED * vertical_position_blob
-        yaw_rate = -self.MAX_YAW_RATE * horizontal_position_blob if horizontal else 0.0
+        yaw_rate = self.MAX_YAW_RATE * horizontal_position_blob if horizontal else 0.0
         cmd_vel = Commanded_Velocity(forward_rate, vertical_rate, yaw_rate)
 
         if modify_conditions and horizontal :
@@ -163,7 +171,7 @@ class Frame_Processor:
     def __advance__(self, frame, clockwise = 1.0) :
 
         #if we don't detect a blob decide between following through and stopping
-        if len(self.red_keypoints) == 0:
+        if not self.red_in_frame:
             current_time = time.time()
 
             #If the time between now and the last commanded velocity is less than 1 second, follow through
@@ -175,7 +183,7 @@ class Frame_Processor:
                 return self.__stop__()
         
         #call center red to make any angular adjustments
-        cmd_vel = self.__center_red__(self, frame, modify_conditions=False, record = False)
+        cmd_vel = self.__center_red__(self, frame, modify_conditions=False, record=False)
         cmd_vel.forward = self.FORWARD_VELOCITY
 
         #record value and time of last cmd_vel published
@@ -194,7 +202,9 @@ class Frame_Processor:
         sends out indication that drone has not stopped
     '''
     def __seek__(self, clockwise = 1.0) :
-        return Commanded_Velocity(0,0,-1.0*clockwise), False
+        if self.rotating_seek : return Commanded_Velocity(0,0,-1.0*clockwise), False
+
+        return Commanded_Velocity(0,0,0), False
 
     '''
         Tells the drone to follow through and repeat the last commanded velocity.
@@ -228,19 +238,81 @@ class Frame_Processor:
 
     '''
     def __find_red_blobs__(self, frame, show = False) :
+
+        # set red_in_frame to false, only set to true if we find ball in frame
+        self.red_in_frame = False
+        
+        frame = imutils.resize(frame, width=600)
+
         self.red_im = frame
 
-        red_hsv = cv2.cvtColor(self.red_im, cv2.COLOR_BGR2HSV)
+        blurred = cv2.GaussianBlur(frame, (11, 11), 0)
+        red_hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
         
         # standard opencv blob detection magic.
         red_mask = cv2.inRange(red_hsv, self.red_hsv_min, self.red_hsv_max)
+        red_mask = cv2.erode(red_mask, None, iterations=5)
         red_mask = cv2.dilate(red_mask, None, iterations=2)
-        red_mask = cv2.erode(red_mask, None, iterations=2)
 
-        red_reverse_mask = 255 - red_mask
-        self.red_keypoints = self.red_detector.detect(red_reverse_mask)
+        #red_reverse_mask = 255 - red_mask
+        #self.red_keypoints = self.red_detector.detect(red_reverse_mask)
 
-        self.red_in_frame = not(len(self.red_keypoints) == 0)
+        #self.red_in_frame = not(len(self.red_keypoints) == 0)
+
+        ###
+
+        # find contours in the mask and initialize the current
+        # (x, y) center of the ball
+        cnts = cv2.findContours(red_mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        center = None
+
+        # only proceed if at least one contour was found
+        if len(cnts) > 0:
+            # find the largest contour in the mask, then use
+            # it to compute the minimum enclosing circle and
+            # centroid
+            c = max(cnts, key=cv2.contourArea)
+            ((x, y), radius) = cv2.minEnclosingCircle(c)
+            M = cv2.moments(c)
+            if M["m00"] != 0.0 :
+                center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+                # only proceed if the radius meets a minimum size
+                if radius > 10:
+                    # draw the circle and centroid on the frame,
+                    # then update the list of tracked points
+                    cv2.circle(frame, (int(x), int(y)), int(radius),
+                        (0, 255, 255), 2)
+                    cv2.circle(frame, center, 5, (0, 0, 255), -1)
+
+                    #red is in frame
+                    self.red_in_frame = True
+
+                    #record horizontal, vert position of blob
+                    self.red_horizontal_pos = x
+                    self.red_vertical_pos = y
+
+        if show :
+            # update the points queue
+            self.pts.appendleft(center)
+
+            # loop over the set of tracked points
+            for i in range(1, len(self.pts)):
+                # if either of the tracked points are None, ignore
+                # them
+                if self.pts[i - 1] is None or self.pts[i] is None:
+                    continue
+
+                # otherwise, compute the thickness of the line and
+                # draw the connecting lines
+                thickness = int(np.sqrt(10 / float(i + 1)) * 2.5)
+                cv2.line(frame, self.pts[i - 1], self.pts[i], (0, 0, 255), thickness)
+
+            # show the frame to our screen
+            cv2.imshow("Frame", frame)
+            cv2.imshow("Red Mask", red_mask)
+            key = cv2.waitKey(1) & 0xFF
 
     '''
         Finds normalized distance of the blob from center of screen.
@@ -248,13 +320,13 @@ class Frame_Processor:
         x,y value of 1,1 means blob is in bottom right corner.
         x,y value of -1,-1 means blob in top left corner.
     '''
-    def __get_blob_relative_position__(self, image, keyPoint):
-        rows = float(image.shape[0])
-        cols = float(image.shape[1])
+    def __get_blob_relative_position__(self):
+        rows = float(self.red_im.shape[0])
+        cols = float(self.red_im.shape[1])
         center_x = 0.5 * cols
         center_y = 0.5 * rows
-        x = (keyPoint.pt[0] - center_x) / center_x
-        y = (keyPoint.pt[1] - center_y) / center_y
+        x = (self.red_horizontal_pos - center_x) / center_x
+        y = (self.red_vertical_pos - center_y) / center_y
         return (x, y)
 
     # endregion
