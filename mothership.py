@@ -13,8 +13,6 @@ import sys
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 
-# Size of square in meters
-SQUARE_SIZE = 10
 # Desired altitude (in meters) to takeoff to
 TARGET_ALTITUDE = 3
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
@@ -34,6 +32,15 @@ POSITION_DIFFERENCE = 1
 PICKUP_HEIGHT = 1
 #distance mothership should be from the babyship to begin locating it with the camera in meters
 PICKUP_DISTANCE = 15
+#max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
+HOVER_DIFFERENCE = 0.05
+
+def get_hover(drone):
+    """
+    this function will determine the amount of thrust needed to hover the drone at its current weight should be between 0.2  and 0.8
+    """
+    hover = drone.parameters['MOT_THR_HOVER']
+    return hover
 
 def send_mothership_to_babyship(mothership, babyship):
     """
@@ -41,12 +48,12 @@ def send_mothership_to_babyship(mothership, babyship):
     Function does not end until the vehicle is within the the waypoint limit.
     """
     location_offset_meters = pickup_position(mothership, babyship)
-    pickup_coordinates = meter_offset_to_coords(location_offset_meters, vehicle)
+    pickup_coordinates = meter_offset_to_coords(location_offset_meters, mother)
     print("sending mothership to babyship general area")
 
     mothership.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
 
-    while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), vehicle) > WAYPOINT_LIMIT:
+    while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), mother) > WAYPOINT_LIMIT:
         time.sleep(.5)
 
     print("Mothership in position to pickup babyship")
@@ -74,15 +81,17 @@ def meter_offset_to_coords(offset, drone):
     coordinates = [newlat, newlon, offset[2]]
     return coordinates
 
-def drone_connected(drone1, drone2):
+def drone_connected(drone1, drone2, ConnectedThrust):
     """
     passes two vehicle objects in and determines based on location and acceleration if they are connected and flying as one object. 
     return True if connected, return False if not connected
     """
     pos_difference = abs(drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat) + abs(drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon) + abs(drone1.location.global_relative_frame.alt - drone2.location.global_relative_frame.alt)
     vel_difference = abs(drone1.velocity[0] - drone2.velocity[0]) + abs(drone1.velocity[1] - drone2.velocity[1]) + abs(drone1.velocity[2] - drone2.velocity[2]) 
+    hov_difference = abs(drone1.parameter['MOT_THR_HOVER'] - ConnectedThrust)
 
-    if((pos_difference < POSITION_DIFFERENCE) and (vel_difference < VELOCITY_DIFFERENCE)):
+
+    if((pos_difference < POSITION_DIFFERENCE) and (vel_difference < VELOCITY_DIFFERENCE) and (hov_difference < HOVER_DIFFERENCE)):
         return True
 
     else:
@@ -145,7 +154,7 @@ def condition_yaw(heading, relative=False):
     else:
         is_relative = 0 #yaw is an absolute angle
     # create the CONDITION_YAW command using command_long_encode()
-    msg = vehicle.message_factory.command_long_encode(
+    msg = mother.message_factory.command_long_encode(
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
         0, #confirmation
@@ -155,7 +164,7 @@ def condition_yaw(heading, relative=False):
         is_relative, # param 4, relative offset 1, absolute angle 0
         0, 0, 0)    # param 5 ~ 7 not used
     # send command to vehicle
-    vehicle.send_mavlink(msg)
+    mother.send_mavlink(msg)
 
     # delay to wait until yaw of copter is at desired yaw angle
     time.sleep(3)
@@ -163,8 +172,8 @@ def condition_yaw(heading, relative=False):
 # Set up option parsing to get connection strings
 import argparse
 parser = argparse.ArgumentParser(description='Commands vehicle using vehicle.simple_goto.')
-parser.add_argument('--connect', help="Vehicle connection target string.")
-parser.add_argument('--connect2', help="Second vehicle target string.")
+parser.add_argument('--connect', help="Mother connection target string.")
+parser.add_argument('--connect2', help="Baby connection target string.")
 
 args = parser.parse_args()
 
@@ -174,40 +183,40 @@ connection_string2 = args.connect2
 
 # Exit if no connection string specified
 if not connection_string:
-    sys.exit('Please specify connection string for main vehicle')
+    sys.exit('Please specify connection string for mothership')
 
 if not connection_string2:
-    sys.exit('Please specify connection string for second vehicle')
+    sys.exit('Please specify connection string for babyship')
 
 # Connect to the Vehicle
 print('Connecting to main vehicle on: %s' % connection_string)
-vehicle = connect(connection_string, wait_ready=True)
-print('Succesfully connected to main vehicle')
+mother = connect(connection_string, wait_ready=True)
+print('Succesfully connected to mothership')
 
 print('Connecting to second vehicle on: %s' %connection_string2)
-vehicle2 = connect(connection_string2, wait_ready=True)
-print('Succesfully connected to second vehicle')
+baby = connect(connection_string2, wait_ready=True)
+print('Succesfully connected to babyship')
 
 
 """
 Listens for RC_CHANNELS mavlink messages with the goal of determining when the RCIN_4 joystick
 has returned to center for two consecutive seconds.
 """
-@vehicle.on_message('RC_CHANNELS')
+@mother.on_message('RC_CHANNELS')
 def rc_listener(self, name, message):
     global rcin_4_center
     rcin_4_center = (message.chan4_raw < 1550 and message.chan4_raw > 1450)
 
-@vehicle2.on_message('RC_CHANNELS')
+@baby.on_message('RC_CHANNELS')
 def rc_listener(self, name, message):
     global rcin_4_center
     rcin_4_center = (message.chan4_raw < 1550 and message.chan4_raw > 1450)
 
-if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
-    vehicle.mode = VehicleMode("ALT_HOLD")
+if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
+    mother.mode = VehicleMode("ALT_HOLD")
 
-if vehicle2.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
-    vehicle2.mode = VehicleMode("ALT_HOLD")
+if baby.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
+    baby.mode = VehicleMode("ALT_HOLD")
     
 
 
@@ -218,18 +227,18 @@ print('Waiting for safety pilot to arm both vehicles')
 
 
 # Wait until safety pilot arms drone
-while not vehicle.armed:
+while not mother.armed:
     time.sleep(1)
-while not vehicle2.armed:
+while not baby.armed:
     time.sleep(1)
     
 print('Armed...')
-vehicle.mode = VehicleMode("GUIDED")
-vehicle2.mode = VehicleMode("GUIDED")
+mother.mode = VehicleMode("GUIDED")
+baby.mode = VehicleMode("GUIDED")
 
 #takes off the mothership to  target altitude and stops once it reaches at least 95% of that height. 
-
-if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
+ 
+if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
     rcin_4_center_once = False
     rcin_4_center_twice = False
@@ -245,25 +254,27 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     
     # Takeoff to short altitude
     print("Taking off!")
-    vehicle.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
+    mother.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
 
     while True:
          # Break just below target altitude.
-        if vehicle.location.global_relative_frame.alt >= TARGET_ALTITUDE * ALTITUDE_REACH_THRESHOLD:
+        if mother.location.global_relative_frame.alt >= TARGET_ALTITUDE * ALTITUDE_REACH_THRESHOLD:
             break
         time.sleep(.5)
     # yaw north
     condition_yaw(0)
+    MotherCarryingBabyHover = get_hover(mother)
+    print("Mother carrying baby hover: %s" % MotherCarryingBabyHover)
 
 """
 code here for mothership dropping the babyship
 """
 
-while vehicle2.mode != VehicleMode("LAND"):
+while baby.mode != VehicleMode("LAND"):
     #waits until the mode of the bayship is set to "LAND" so the mothership knows when to go and pick it up
     time.sleep(1) 
 #Once babyship is ready to be picked up the mothership is positioned away from babyship to allow the camera to find it
-send_mothership_to_babyship(vehicle,vehicle2)
+send_mothership_to_babyship(mother,baby)
 
 
 
@@ -280,19 +291,20 @@ return to home and land
 
 
 print('Landing')
-if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
+if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     # Land Copter
-    vehicle.mode = VehicleMode("LAND")
+    mother.mode = VehicleMode("LAND")
 
-if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_GROUND_ROVER:
+if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_GROUND_ROVER:
     # disarm Rover
-    vehicle.armed = False
+    mother.armed = False
 
 # Stay connected to vehicle until landed and disarmed
-while vehicle.armed:
+while mother.armed:
     time.sleep(1)
 
 print("Done!")
 
 # Close vehicle object before exiting script
-vehicle.close()
+baby.close()
+mother.close()

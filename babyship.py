@@ -10,9 +10,8 @@ need to start teleported in the air to do this.
 """
 
 from __future__ import print_function
-
 import math
-from random import random
+from random import seed, random
 import time
 import sys
 from dronekit import connect, VehicleMode, LocationGlobalRelative
@@ -237,13 +236,13 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     condition_yaw(0)
 
     #random location to test
-    offset = [25*random.random(), 25*random.random(), 5]
+    offset = [25*random(), 25*random(), 5]
     #non random location to test
     #offset = [25, 25, 5]
     fly_location = meter_offset_to_coords(offset, vehicle)
     vehicle.simple_goto(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]))
     print("babyship flying to the location")
-    while distanceToWaypoint(vehicle.location.global_relative_frame, LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])) > WAYPOINT_LIMIT:
+    while get_distance_metres(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]), vehicle.location.global_relative_frame) > WAYPOINT_LIMIT:
         time.sleep(.5)
 
     print("babyship is in location")
