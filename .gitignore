@@ -1,0 +1,11 @@
+**/logs
+*.bin
+*.log
+*.tlog
+*.tlog.raw
+*.raw
+**/terrain
+*.parm
+*/__pycache__/
+
+*/sitl.sh
