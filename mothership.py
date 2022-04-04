@@ -12,6 +12,10 @@ import time
 import sys
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
+#from gpiozero import Servo
+
+#servo = Servo(25)
+
 
 # Desired altitude (in meters) to takeoff to
 TARGET_ALTITUDE = 3
@@ -34,6 +38,7 @@ PICKUP_HEIGHT = 1
 PICKUP_DISTANCE = 15
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
 HOVER_DIFFERENCE = 0.05
+
 
 def get_hover(drone):
     """
@@ -134,8 +139,25 @@ def distanceToWaypoint(coordinates, drone):
     """
     distance = get_distance_metres(drone.location.global_frame, coordinates)
     return distance
+
+def climb_alt(drone, altitude):
+    """
+    send MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT to drone to climb to specified altitude
+
+    Continue on the current course and climb/descend to specified altitude. 
+    When the altitude is reached continue to the next command 
+    (i.e., don't proceed to the next command until the desired altitude is reached.
+    not supported in ardupilot
+    """
+    #Climb or Descend (0 = Neutral, command completes when within 5m of this command's altitude, 1 = Climbing, command completes when at or above this command's altitude, 2 = Descending, command completes when at or below this command's altitude.
+    msg = drone.message_factory.command_long_encode(0, 0, mavutil.mavlink.MAV_CMD_NAV_CONTINUE_AND_CHANGE_ALT, 0, 1, 0, 0, 0, 0, 0, altitude) #altitude in meters
+    #send command to vehicle
+    drone.send_mavlink(msg)
+    while drone.location.global_frame.alt < altitude*ALTITUDE_REACH_THRESHOLD:
+        time.sleep(.5)
     
-def condition_yaw(heading, relative=False):
+
+def condition_yaw(drone ,heading, relative=False):
     """
     Send MAV_CMD_CONDITION_YAW message to point vehicle at a specified heading (in degrees).
 
@@ -154,7 +176,7 @@ def condition_yaw(heading, relative=False):
     else:
         is_relative = 0 #yaw is an absolute angle
     # create the CONDITION_YAW command using command_long_encode()
-    msg = mother.message_factory.command_long_encode(
+    msg = drone.message_factory.command_long_encode(
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
         0, #confirmation
@@ -164,7 +186,7 @@ def condition_yaw(heading, relative=False):
         is_relative, # param 4, relative offset 1, absolute angle 0
         0, 0, 0)    # param 5 ~ 7 not used
     # send command to vehicle
-    mother.send_mavlink(msg)
+    drone.send_mavlink(msg)
 
     # delay to wait until yaw of copter is at desired yaw angle
     time.sleep(3)
@@ -262,9 +284,11 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
             break
         time.sleep(.5)
     # yaw north
-    condition_yaw(0)
-    MotherCarryingBabyHover = get_hover(mother)
-    print("Mother carrying baby hover: %s" % MotherCarryingBabyHover)
+    condition_yaw(mother, 0)
+    #untested hover detection code the function drone_connected also does not work without hover
+    #MotherCarryingBabyHover = mother.parameters['MOT_THR_HOVER']
+
+    #print("Mother carrying baby hover: %s" % MotherCarryingBabyHover)
 
 """
 code here for mothership dropping the babyship
@@ -279,6 +303,7 @@ send_mothership_to_babyship(mother,baby)
 
 
 
+
 """
 have camera locate the light on top of the loops
 fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
@@ -287,17 +312,13 @@ fly to set altitude
 return to home and land
 """
 
+#code for closing the servo
 
-
-
-print('Landing')
+print('returning to home')
 if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     # Land Copter
-    mother.mode = VehicleMode("LAND")
+    mother.mode = VehicleMode("RTL")
 
-if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_GROUND_ROVER:
-    # disarm Rover
-    mother.armed = False
 
 # Stay connected to vehicle until landed and disarmed
 while mother.armed:
