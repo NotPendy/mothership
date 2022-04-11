@@ -149,7 +149,7 @@ while True :
     #command drone to perform specified action
     vehicle.send_mavlink(__move_by_cmd_vel__(cmd_vel))
 
-    #print(cmd_vel.yaw_rate)
+    print(cmd_vel.yaw_rate)
 
 #release video capture
 cap.release()
