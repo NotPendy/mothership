@@ -10,7 +10,7 @@ from pymavlink import mavutil
 import cv2
 import os
 from imutils.video import VideoStream
-from frame_processor import Frame_Processor
+from vision_control.frame_processor import Frame_Processor
 import time
 
 class Vision_Controller :
@@ -21,21 +21,14 @@ class Vision_Controller :
     '''
         start video capture, drone connection
     '''
-    def __init__(self) :
+    def __init__(self, vehicle) :
 
         # Initialize frame processor
         self.frame_processor = Frame_Processor()
 
         self.cap = VideoStream(src=0).start()
 
-        try:
-            print("Creating Drone Object")
-            connection_string = "udp:127.0.0.1:5760"
-            self.vehicle = connect(connection_string, wait_ready=True)
-            self.add_callback()
-            self.vehicle.mode = VehicleMode("GUIDED")
-        except KeyboardInterrupt:
-            self.clean_exit()
+        self.vehicle = vehicle
 
     '''
         Closes vehicle connection upon exit
@@ -43,22 +36,7 @@ class Vision_Controller :
     def __del__(self):
         print("Exiting")
         self.vehicle.close()
-
-    '''
-        Print a message whenever mode is changed
-    '''
-    def mode_callback(self,attr_name,value):
-        #Check Mode
-        self.mode = value.name
-        print(f"CALLBACK: {value.name}")
-        if value.name == 'LAND':
-            os._exit(1)
-
-    '''
-        Add callback function(s) to vehicle
-    '''
-    def add_callback(self):
-        self.vehicle.add_attribute_listener('mode.name', self.mode_callback)
+        self.cap.stop()
     
     # endregion
 
@@ -112,18 +90,13 @@ class Vision_Controller :
         Returns True if image loop exits successfully (drone centers on target, advances to 
         target, follows through and stops) or False if the image loop ends in any other way.
     '''
-    def center_in_direction(self, horizontal, stop = True) :
+    def center_in_direction(self, horizontal, stop = True, show = False, advance=True, stop_when_centered=True) :
 
         #initialize video capture
         #cap = VideoStream(src=0).start()
 
         successful_exit = False
 
-        #check if capture opened correctly
-        if not self.cap.isOpened():
-            print("Cannot open camera")
-            return
-        
         #start frame read loop
         while True :
             #get frame
@@ -134,14 +107,14 @@ class Vision_Controller :
                 print("Can't receive frame (stream end?). Exiting ...")
                 break
 
-            cmd_vel
-            stopped
+            cmd_vel = None
+            stopped = None
 
             #send frame to be processed and recieve commanded velocity
             if horizontal : 
-                cmd_vel, stopped = self.frame_processor.center_horizontally_and_advance(frame)
+                cmd_vel, stopped = self.frame_processor.center_horizontally_and_advance(frame, advance=advance ,show=show)
             else :
-                cmd_vel, stopped = self.frame_processor.center_vertically(frame)
+                cmd_vel, stopped = self.frame_processor.center_vertically(frame,stop_when_centered=stop_when_centered,show=show)
 
             #command drone to perform specified action
             self.vehicle.send_mavlink(self.__move_by_cmd_vel_msg__(cmd_vel))
