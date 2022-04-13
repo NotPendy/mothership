@@ -1,5 +1,5 @@
 """
-code to run a servo off a rasberry pi using GPIO pin 25
+code to run a servo off a rasberry pi using GPIO pin 25 and GPIO pin 23
 
 commands to run to install needed libraries
 sudo apt-get install python3-rpi.gpio
@@ -8,17 +8,22 @@ sudo pip3 install gpiozero
 
 
 from gpiozero import Servo
+from gpiozero import Button
 from time import sleep
 
 servo = Servo(25)
+limitswitch = Button(23, False)
 
-try:
-	while True:
-    	servo.min()
-    	sleep(0.5)
-    	servo.mid()
-    	sleep(0.5)
-    	servo.max()
-    	sleep(0.5)
-except KeyboardInterrupt:
-	print("Program stopped")
+
+print("servo going to min posistion (should be releasing baby)")
+servo.min()
+sleep(1)
+
+
+print("servo going to mid posistion (should be ready to pickup baby)")
+servo.mid()
+
+print("waiting for limit switch to be pressed (will set servo to closed posistion)")
+limitswitch.wait_for_press()
+
+servo.max()
