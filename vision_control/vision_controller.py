@@ -47,32 +47,32 @@ class Vision_Controller :
         The drone will stop at fixed intervals in its travel to seek for the red ball.
         When the drone finds the ball, it exits the loop.
     '''
-    def seek(self) :
+    def seek(self, show=False) :
 
         unit_length = 1
         units_per_side = 2
 
         while True :
             #move forward by units_per_side / 2
-            if self.__turn_step__(units_per_side/2, unit_length, 0) :
+            if self.__turn_step__(int(units_per_side/2), unit_length, 0, show=show) :
                 return True
             
             #turn 90 degrees, move forward by units_per_side / 2
-            if self.__turn_step__(units_per_side/2, unit_length, 90) :
+            if self.__turn_step__(int(units_per_side/2), unit_length, 90, show=show) :
                 return True
 
             #turn 90 degrees, move forward by units_per_side
             for _ in range(3) :
-                if self.__turn_step__(units_per_side, unit_length, 90) :
+                if self.__turn_step__(units_per_side, unit_length, 90, show=show) :
                     return True
             
             #turn 90 degrees, move forward by units_per_side / 2
             for _ in range(2) :
-                if self.__turn_step__(units_per_side/2, unit_length, 90) :
+                if self.__turn_step__(int(units_per_side/2), unit_length, 90, show=show) :
                     return True
             
             #turn 180 degrees
-            if self.__turn_step__(0, unit_length, 180) :
+            if self.__turn_step__(0, unit_length, 180, show=show) :
                 return True
             
             #increase units per side
@@ -141,18 +141,21 @@ class Vision_Controller :
         Drone rotates given amount.
         Drone makes units_per_side units of unit_length forward.
     '''
-    def __turn_step__(self, units_per_side, unit_length, turn_amount_degrees) :
+    def __turn_step__(self, units_per_side, unit_length, turn_amount_degrees, show=False) :
         #check for ball.
-        if self.__circle_seek__() :
-            return True
+        #if self.__circle_seek__(show=show) :
+        #    return True
         
         #turn by turn_amount_degrees.
         self.vehicle.send_mavlink(self.__condition_yaw_msg__(turn_amount_degrees))
-        time.sleep(2)
+        print("turning")
+        time.sleep(5)
 
         #move units_per_side units of unit_length forward.
         for _ in range(units_per_side) :
             self.vehicle.send_mavlink(self.__move_forward_meters_msg__(unit_length))
+            print("forward")
+            time.sleep(5)
 
 
     # endregion
@@ -162,7 +165,7 @@ class Vision_Controller :
     '''
         Rotates drone in a circle. Periodically checks to see if ball in frame.
     '''
-    def __circle_seek__(self) :
+    def __circle_seek__(self, show=False) :
         #do 16 rotations of pi/8 rads (22.5 degrees)
         for rot in range(16) :
 
@@ -179,7 +182,7 @@ class Vision_Controller :
                 frames_with_red = 0
 
                 for _ in range(5) :
-                    red_in_frame = self.frame_processor.process_frame_check_red(frame)
+                    red_in_frame = self.frame_processor.process_frame_check_red(frame, show=show)
                     if red_in_frame :
                         frames_with_red += 1
 
@@ -197,7 +200,7 @@ class Vision_Controller :
             self.vehicle.send_mavlink(self.__condition_yaw_msg__(22.5))
 
             #wait for drone to rotate
-            time.sleep(0.25)
+            time.sleep(2)
 
             return False
 

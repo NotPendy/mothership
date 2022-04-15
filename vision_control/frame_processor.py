@@ -74,12 +74,19 @@ class Frame_Processor:
 
     # region [High-Level Algorithms]
 
-    def process_frame_check_red(self, frame) :
-        self.__find_red_blobs__(frame)
+    '''
+        This function checks whether a red blob is in the frame
+    '''
+    def process_frame_check_red(self, frame, show = False) :
+        self.__find_red_blobs__(frame, show=show)
 
         return self.red_in_frame
 
 
+    '''
+        This function processes one frame of video and returns the vertical velocity that will bring the drone
+        closer to being centered.
+    '''
     def center_vertically(self, frame, show = False, stop_when_centered = True) :
 
         #Run blob detection on frame
@@ -94,9 +101,9 @@ class Frame_Processor:
             return self.__stop__()
 
     '''
-        This function is called to process one frame of video.
+        This function is called to process one frame of video once the drone has already been centered vertically.
         
-        It returns the velocity that should be commanded to the vehicle
+        It returns the velocity that should be commanded to the vehicle.
     '''
     def center_horizontally_and_advance(self, frame, show = False, advance = True):
 

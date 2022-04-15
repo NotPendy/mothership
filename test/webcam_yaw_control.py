@@ -103,4 +103,7 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
 vision_controller = Vision_Controller(vehicle)
 
-vision_controller.center_in_direction(horizontal=True,advance=False, show=True)
+try :
+    vision_controller.center_in_direction(horizontal=True,advance=False, show=False)
+finally :
+    vehicle.close()
