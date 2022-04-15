@@ -7,6 +7,7 @@
 from pathlib import Path
 import sys
 path_root = Path(__file__).parents[1]
+print(path_root)
 sys.path.append(str(path_root))
 from vision_control.frame_processor import Frame_Processor
 import cv2
