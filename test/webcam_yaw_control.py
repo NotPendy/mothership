@@ -9,6 +9,7 @@ import sys
 path_root = Path(__file__).parents[1]
 sys.path.append(str(path_root))
 from vision_control.frame_processor import Frame_Processor
+from vision_control.vision_controller import Vision_Controller
 import cv2
 from collections import deque
 import time
@@ -26,29 +27,6 @@ ALTITUDE_REACH_THRESHOLD = 0.95
 WAYPOINT_LIMIT = 1
 # Variable to keep track of if joystick to arm has returned to center
 rcin_4_center = False
-
-# region [Helpers]
-
-'''
-    Constructs and returns SET_POSITION_TARGET_LOCAL_NED message with the given
-    forward, downward velocities and yaw rate to cmd_vel
-'''
-def __move_by_cmd_vel__(cmd_vel):
-
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
-        0,       # time_boot_ms (not used)
-        0, 0,    # target system, target component
-        mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
-        0b010111000111, # type_mask (only speeds enabled)
-        0, 0, 0, # x, y, z positions (not used)
-        cmd_vel.forward, 0, cmd_vel.downward, # x, y, z velocity in m/s
-        0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
-        0, cmd_vel.yaw_rate)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
-
-    return msg
-
-# endregion
-
 
 # region [Set Up]
 
@@ -123,35 +101,9 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
 # endregion
 
-greenLower = (20, 46, 27)#(21, 121, 131)
-greenUpper = (50, 255, 255)
+vision_controller = Vision_Controller(vehicle)
 
-frame_processor = Frame_Processor(greenLower, greenUpper, rotating_seek=False)
-
-#initialize video capture
-cap = VideoStream(src=0).start()
-
-time.sleep(2.0)
-
-#start frame read loop
-while True :
-    #get frame
-    frame = cap.read()
-
-    # if frame is read correctly ret is True
-    if frame is None:
-        print("Can't receive frame (stream end?). Exiting ...")
-        break
-
-    #send frame to be processed and recieve commanded velocity
-    cmd_vel, stopped = frame_processor.center_horizontally_and_advance(frame, show=True, advance=False)
-
-    #command drone to perform specified action
-    vehicle.send_mavlink(__move_by_cmd_vel__(cmd_vel))
-
-    #print(cmd_vel.yaw_rate)
-
-#release video capture
-cap.release()
-
-
+try :
+    vision_controller.center_in_direction(horizontal=True,advance=False, show=False)
+finally :
+    vehicle.close()

@@ -31,7 +31,7 @@ class Frame_Processor:
     '''
         Constructor sets up necessary blob detection parameters
     '''
-    def __init__(self, red_hsv_min = (0, 34, 0), red_hsv_max = (10,255,255), rotating_seek = True):
+    def __init__(self, red_hsv_min = (0, 123, 103), red_hsv_max = (85,255,255), rotating_seek = True):
 
         self.rotating_seek = rotating_seek
 
@@ -74,16 +74,25 @@ class Frame_Processor:
 
     # region [High-Level Algorithms]
 
-    def process_frame_check_red(self, frame) :
-        self.__find_red_blobs__(frame)
+    '''
+        This function checks whether a red blob is in the frame
+    '''
+    def process_frame_check_red(self, frame, show = False) :
+        self.__find_red_blobs__(frame, show=show)
 
         return self.red_in_frame
 
 
-    def center_vertically(self, frame) :
+    '''
+        This function processes one frame of video and returns the vertical velocity that will bring the drone
+        closer to being centered.
+    '''
+    def center_vertically(self, frame, show = False, stop_when_centered = True) :
 
         #Run blob detection on frame
-        self.__find_red_blobs__(frame)
+        self.__find_red_blobs__(frame, show=show)
+
+        if not stop_when_centered : self.centered_red_vertically = False
 
         if not self.centered_red_vertically :
             return self.__center_red__(horizontal=False)
@@ -92,9 +101,9 @@ class Frame_Processor:
             return self.__stop__()
 
     '''
-        This function is called to process one frame of video.
+        This function is called to process one frame of video once the drone has already been centered vertically.
         
-        It returns the velocity that should be commanded to the vehicle
+        It returns the velocity that should be commanded to the vehicle.
     '''
     def center_horizontally_and_advance(self, frame, show = False, advance = True):
 
@@ -133,7 +142,7 @@ class Frame_Processor:
         #get normalized x position of blob in frame
         horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__()
 
-        print(horizontal_position_blob)
+        print(horizontal_position_blob) if horizontal else print(vertical_position_blob)
 
         #calculate commanded velocity based off of blob location in frame
         forward_rate = 0.0

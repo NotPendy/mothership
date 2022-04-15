@@ -1,5 +1,7 @@
 # mothership
 ECE492/592 Mothership project
 
-## Vsion Dependencies
-- `pip3 install opencv-python; sudo apt-get install -y libatlas-base-dev libhdf5-dev libhdf5-serial-dev libatlas-base-dev libjasper-dev  libqtgui4  libqt4-test`
+## Vision Dependencies (Pi)
+- `pip3 install opencv-python`
+- `sudo apt-get install libatlas-base-dev`
+- `pip3 install -U numpy`
