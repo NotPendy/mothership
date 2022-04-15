@@ -6,8 +6,7 @@
 '''
 from pathlib import Path
 import sys
-path_root = Path(__file__).parents[1]
-sys.path.append(str(path_root))
+sys.path.append("/home/pi/git/mothership/")
 from vision_control.frame_processor import Frame_Processor
 import cv2
 from collections import deque
