@@ -31,7 +31,7 @@ class Frame_Processor:
     '''
         Constructor sets up necessary blob detection parameters
     '''
-    def __init__(self, red_hsv_min = (0, 123, 103), red_hsv_max = (85,255,255), rotating_seek = True):
+    def __init__(self, red_hsv_min = (171, 143, 51), red_hsv_max = (255,255,255), rotating_seek = True):
 
         self.rotating_seek = rotating_seek
 
@@ -251,7 +251,7 @@ class Frame_Processor:
         # set red_in_frame to false, only set to true if we find ball in frame
         self.red_in_frame = False
         
-        frame = imutils.resize(frame, width=600)
+        frame = imutils.resize(frame, width=900)
 
         self.red_im = frame
 
@@ -260,8 +260,10 @@ class Frame_Processor:
         
         # standard opencv blob detection magic.
         red_mask = cv2.inRange(red_hsv, self.red_hsv_min, self.red_hsv_max)
-        red_mask = cv2.erode(red_mask, None, iterations=5)
+        #red_mask = cv2.erode(red_mask, None, iterations=2)
         red_mask = cv2.dilate(red_mask, None, iterations=2)
+        red_mask = cv2.erode(red_mask, None, iterations=1)
+        #red_mask = cv2.dilate(red_mask, None, iterations=2)
 
         #red_reverse_mask = 255 - red_mask
         #self.red_keypoints = self.red_detector.detect(red_reverse_mask)
