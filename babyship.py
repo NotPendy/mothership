@@ -20,7 +20,7 @@ from pymavlink import mavutil
 # Size of square in meters
 SQUARE_SIZE = 10
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 20
+TARGET_ALTITUDE = 10
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
@@ -236,17 +236,17 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     condition_yaw(0)
 
     #random location to test
-    offset = [25*random(), 25*random(), 5]
+    #offset = [25*random(), 25*random(), 5]
     #non random location to test
-    #offset = [25, 25, 5]
+    offset = [0, -10, 10]
     fly_location = meter_offset_to_coords(offset, vehicle)
     start = time.time()
     
     vehicle.simple_goto(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]))
     print("babyship flying to the location")
     while get_distance_metres(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]), vehicle.location.global_relative_frame) > WAYPOINT_LIMIT:
-        time.sleep(.5)
-        if(time.time() - int(start) > 30):
+        time.sleep(.5)30
+        if(time.time() - int(start) > 100):
             print("babyship timed out")
             break
 
