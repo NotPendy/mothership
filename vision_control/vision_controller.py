@@ -24,7 +24,7 @@ class Vision_Controller :
     def __init__(self, vehicle) :
 
         # Initialize frame processor
-        self.frame_processor = Frame_Processor()
+        self.frame_processor = Frame_Processor("default", rotating_seek=False)
 
         self.cap = VideoStream(src=0).start()
 

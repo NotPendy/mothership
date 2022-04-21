@@ -1,0 +1,105 @@
+<thresholds>
+
+    <default>
+        <thresh_1>
+            <hmin>109</hmin>
+            <smin>112</smin>
+            <vmin>108</vmin>
+            <hmax>180</hmax>
+            <smax>166</smax>
+            <vmax>223</vmax>
+        </thresh_1>
+        <thresh_2>
+            <hmin>109</hmin>
+            <smin>49</smin>
+            <vmin>209</vmin>
+            <hmax>131</hmax>
+            <smax>125</smax>
+            <vmax>255</vmax>
+        </thresh_2>
+        <thresh_3>
+            <hmin>0</hmin>
+            <smin>27</smin>
+            <vmin>176</vmin>
+            <hmax>73</hmax>
+            <smax>255</smax>
+            <vmax>255</vmax>
+        </thresh_3>
+    </default>
+
+    <dark_red>
+        <thresh_1>
+            <hmin>1</hmin>
+            <smin>2</smin>
+            <vmin>3</vmin>
+            <hmax>4</hmax>
+            <smax>5</smax>
+            <vmax>6</vmax>
+        </thresh_1>
+    
+        <thresh_2>
+            <hmin>10</hmin>
+            <smin>20</smin>
+            <vmin>30</vmin>
+            <hmax>40</hmax>
+            <smax>50</smax>
+            <vmax>60</vmax>
+        </thresh_2>
+
+        <thresh_3>
+            <hmin>100</hmin>
+            <smin>200</smin>
+            <vmin>300</vmin>
+            <hmax>400</hmax>
+            <smax>500</smax>
+            <vmax>600</vmax>
+        </thresh_3>
+    </dark_red>
+
+    <purple_orange_test>
+        <thresh_1>
+            <hmin>109</hmin>
+            <smin>112</smin>
+            <vmin>108</vmin>
+            <hmax>180</hmax>
+            <smax>166</smax>
+            <vmax>223</vmax>
+        </thresh_1>
+        <thresh_2>
+            <hmin>109</hmin>
+            <smin>49</smin>
+            <vmin>209</vmin>
+            <hmax>131</hmax>
+            <smax>125</smax>
+            <vmax>255</vmax>
+        </thresh_2>
+        <thresh_3>
+            <hmin>0</hmin>
+            <smin>27</smin>
+            <vmin>176</vmin>
+            <hmax>73</hmax>
+            <smax>255</smax>
+            <vmax>255</vmax>
+        </thresh_3>
+    </purple_orange_test>
+
+    <pink>
+        <thresh_1>
+            <hmin>11</hmin>
+            <smin>21</smin>
+            <vmin>31</vmin>
+            <hmax>41</hmax>
+            <smax>51</smax>
+            <vmax>61</vmax>
+        </thresh_1>
+    
+        <thresh_2>
+            <hmin>101</hmin>
+            <smin>201</smin>
+            <vmin>301</vmin>
+            <hmax>401</hmax>
+            <smax>501</smax>
+            <vmax>601</vmax>
+        </thresh_2>
+    </pink>
+</thresholds>
