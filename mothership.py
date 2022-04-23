@@ -35,7 +35,7 @@ POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
 PICKUP_HEIGHT = 10
 #distance mothership should be from the babyship to begin locating it with the camera in meters
-PICKUP_DISTANCE = 5
+PICKUP_DISTANCE = 3
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
 HOVER_DIFFERENCE = 0.05
 

@@ -66,6 +66,16 @@
             <smax>255</smax>
             <vmax>168</vmax>
         </thresh_3>
+
+	<thresh_4>
+            <hmin>127</hmin>
+            <smin>92</smin>
+            <vmin>37</vmin>
+            <hmax>160</hmax>
+            <smax>171</smax>
+            <vmax>255</vmax>
+        </thresh_4>
+
     </dark_red>
 
     <purple_orange_test>
