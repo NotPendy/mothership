@@ -17,7 +17,7 @@ from pymavlink import mavutil
 from imutils.video import VideoStream
 
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 5
+TARGET_ALTITUDE = 4
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
