@@ -16,13 +16,13 @@ limitswitch = Button(23, False)
 
 
 print("servo going to min posistion (should be releasing baby)")
-servo.min()
-sleep(1)
+servo.value = -1
+sleep(3)
 
 print("servo going to mid posistion (should be ready to pickup baby)")
-servo.mid()
+
 
 print("waiting for limit switch to be pressed (will set servo to closed posistion)")
-limitswitch.wait_for_press()
 
-servo.max()
+servo.value = .75
+

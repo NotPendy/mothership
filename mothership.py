@@ -18,7 +18,7 @@ from pymavlink import mavutil
 
 
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 3
+TARGET_ALTITUDE = 10
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
@@ -33,9 +33,9 @@ VELOCITY_DIFFERENCE = 1
 # variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
-PICKUP_HEIGHT = 1
+PICKUP_HEIGHT = 10
 #distance mothership should be from the babyship to begin locating it with the camera in meters
-PICKUP_DISTANCE = 15
+PICKUP_DISTANCE = 5
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
 HOVER_DIFFERENCE = 0.05
 
@@ -314,10 +314,10 @@ return to home and land
 
 #code for closing the servo
 
-print('returning to home')
+print('LANDING NEAR BABY')
 if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     # Land Copter
-    mother.mode = VehicleMode("RTL")
+    mother.mode = VehicleMode("LAND")
 
 
 # Stay connected to vehicle until landed and disarmed
