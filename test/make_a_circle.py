@@ -20,7 +20,7 @@ from pymavlink import mavutil
 # Size of square in meters
 SQUARE_SIZE = 10
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 3
+TARGET_ALTITUDE = 10
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
