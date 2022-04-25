@@ -238,14 +238,14 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     #random location to test
     #offset = [25*random(), 25*random(), 5]
     #non random location to test
-    offset = [0, -10, 10]
+    offset = [-50, -50, 10]
     fly_location = meter_offset_to_coords(offset, vehicle)
     start = time.time()
     
     vehicle.simple_goto(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]))
     print("babyship flying to the location")
     while get_distance_metres(LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2]), vehicle.location.global_relative_frame) > WAYPOINT_LIMIT:
-        time.sleep(.5)30
+        time.sleep(.5)
         if(time.time() - int(start) > 100):
             print("babyship timed out")
             break

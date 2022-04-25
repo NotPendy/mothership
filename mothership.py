@@ -6,7 +6,7 @@ Code for the Mothership drone. Currently connects to the TCP address specified w
 """
 
 from __future__ import print_function
-
+import geopy.distance
 import math
 import time
 import sys
@@ -59,6 +59,7 @@ def send_mothership_to_babyship(mothership, babyship):
     mothership.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
 
     while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), mother) > WAYPOINT_LIMIT:
+        print(distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), mother))
         time.sleep(.5)
 
     print("Mothership in position to pickup babyship")
@@ -106,10 +107,20 @@ def pickup_position(drone1, drone2):
     """
     function to find the exact position mothership should be at when picking up the babyship. 
     """
-    relative_lat = drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat - PICKUP_DISTANCE
-    relative_lon = drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon
 
+    relative_lat = (drone1.location.global_relative_frame.lat - drone2.location.global_relative_frame.lat)*111139
+    relative_lon = (drone1.location.global_relative_frame.lon - drone2.location.global_relative_frame.lon)*111139
+    #for northern hemisphere only
+    if(drone1.location.global_relative_frame.lat > drone2.location.global_relative_frame.lat):
+        relative_lat = relative_lat*-1
+    if(drone1.location.global_relative_frame.lon > drone2.location.global_relative_frame.lon):
+        relative_lon = relative_lon*-1
+
+    relative_lon = relative_lon - PICKUP_DISTANCE
+    
     pickup_location = [relative_lat, relative_lon, PICKUP_HEIGHT]
+    print(pickup_location)
+    
     return pickup_location
 
 def safe_to_fly(drone):
@@ -293,16 +304,39 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 """
 code here for mothership dropping the babyship
 """
-
+print("waiting for baby to be in land mode")
 while baby.mode != VehicleMode("LAND"):
     #waits until the mode of the bayship is set to "LAND" so the mothership knows when to go and pick it up
     time.sleep(1) 
 #Once babyship is ready to be picked up the mothership is positioned away from babyship to allow the camera to find it
-send_mothership_to_babyship(mother,baby)
+
+relative_lat = mother.location.global_relative_frame.lat - mother.location.global_relative_frame.lat
+relative_lon = baby.location.global_relative_frame.lon - baby.location.global_relative_frame.lon
+print("mother lat:", mother.location.global_frame.lat)
+print("mother lon:", mother.location.global_frame.lon)
+
+print("baby lat:", baby.location.global_frame.lat)
+print("baby lon:", baby.location.global_frame.lon)
+mother_pos = (mother.location.global_frame.lat, mother.location.global_frame.lon)
+baby_pos = (baby.location.global_frame.lat, baby.location.global_frame.lon)
+print(geopy.distance.distance(mother_pos, baby_pos).m)
+#send_mothership_to_babyship(mother,baby)
+
+baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
+mother.simple_goto(baby_pickup_location)
+while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
+    time.sleep(.5)
+    print("mother flying to baby")
 
 
+offset = [-PICKUP_DISTANCE, 0, PICKUP_HEIGHT]
+fly_location = meter_offset_to_coords(offset, mother)
 
-
+baby_pickup_location = LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])
+print("mother flying behind baby")
+mother.simple_goto(baby_pickup_location)
+while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
+    time.sleep(.5)
 
 """
 have camera locate the light on top of the loops
