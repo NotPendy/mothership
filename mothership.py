@@ -5,8 +5,6 @@
 Code for the Mothership drone. Currently connects to the TCP address specified when running program with --connect argument, connects to the second drone on --connect2 argument takes off to a target altitude, lands back at the same position, and then disarms to end program
 """
 
-from __future__ import print_function
-import geopy.distance
 import math
 import time
 import sys
@@ -22,7 +20,7 @@ TARGET_ALTITUDE = 10
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
-# This is used instead of 0 since distanceToWaypoint funciton is not 100% accurate
+# This is used instead of 0 since distanceToWaypoint funciton is not 100% accurate, 1 Meter is good as of field test 4/25/22
 WAYPOINT_LIMIT = 1
 # Variable to keep track of if joystick to arm has returned to center
 rcin_4_center = False
@@ -35,10 +33,32 @@ POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
 PICKUP_HEIGHT = 10
 #distance mothership should be from the babyship to begin locating it with the camera in meters
-PICKUP_DISTANCE = 3
+PICKUP_DISTANCE = 2.5
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
 HOVER_DIFFERENCE = 0.05
 
+def send_mothership_to_babyship():
+    """
+    function to send the mothership to the babyship by flying above the location of the babyship at PICKUP_HEIGHT meters and then flying south of Babyship at PICKUP_DISTANCE meters.
+    Relies on the babyship 
+    """
+    #flying mother to babyship at PICKUP_HEIGHT meters above
+    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
+    mother.simple_goto(baby_pickup_location)
+    print("mother flying to baby")
+    while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
+        time.sleep(.5)
+        
+    #updating the offset to the mother's current location - PICKUP_DISTANCE meters south
+    offset = [-PICKUP_DISTANCE, 0, PICKUP_HEIGHT]
+    fly_location = meter_offset_to_coords(offset, mother)
+
+    baby_pickup_location = LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])
+    print("mother flying behind baby")
+    mother.simple_goto(baby_pickup_location)
+    while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
+        time.sleep(.5)
+    return
 
 def get_hover(drone):
     """
@@ -46,24 +66,6 @@ def get_hover(drone):
     """
     hover = drone.parameters['MOT_THR_HOVER']
     return hover
-
-def send_mothership_to_babyship(mothership, babyship):
-    """
-    This function takes in two drones "mothership" and "babyship" and sends the mothership to the location of the babyship.
-    Function does not end until the vehicle is within the the waypoint limit.
-    """
-    location_offset_meters = pickup_position(mothership, babyship)
-    pickup_coordinates = meter_offset_to_coords(location_offset_meters, mother)
-    print("sending mothership to babyship general area")
-
-    mothership.simple_goto(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]))
-
-    while distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), mother) > WAYPOINT_LIMIT:
-        print(distanceToWaypoint(LocationGlobalRelative(pickup_coordinates[0], pickup_coordinates[1], pickup_coordinates[2]), mother))
-        time.sleep(.5)
-
-    print("Mothership in position to pickup babyship")
-    return
 
 def meter_offset_to_coords(offset, drone):
     """
@@ -252,10 +254,7 @@ if baby.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     baby.mode = VehicleMode("ALT_HOLD")
     
 
-
-
-#vehicle.parameters['SYSID_THISMAV'] = 1
-# Wait for pilot before proceeding
+# Wait for pilot before proceeding. Both drones must be armed at about the same time or they quickly disarm.
 print('Waiting for safety pilot to arm both vehicles')
 
 
@@ -304,42 +303,29 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 """
 code here for mothership dropping the babyship
 """
+#mothership will wait for baby to land before attempting to go to its position
 print("waiting for baby to be in land mode")
 while baby.mode != VehicleMode("LAND"):
     #waits until the mode of the bayship is set to "LAND" so the mothership knows when to go and pick it up
     time.sleep(1) 
+
+
+
 #Once babyship is ready to be picked up the mothership is positioned away from babyship to allow the camera to find it
 
-relative_lat = mother.location.global_relative_frame.lat - mother.location.global_relative_frame.lat
-relative_lon = baby.location.global_relative_frame.lon - baby.location.global_relative_frame.lon
+#printing the location of the mothership and babyship for debugging purposes
 print("mother lat:", mother.location.global_frame.lat)
 print("mother lon:", mother.location.global_frame.lon)
-
 print("baby lat:", baby.location.global_frame.lat)
 print("baby lon:", baby.location.global_frame.lon)
-mother_pos = (mother.location.global_frame.lat, mother.location.global_frame.lon)
-baby_pos = (baby.location.global_frame.lat, baby.location.global_frame.lon)
-print(geopy.distance.distance(mother_pos, baby_pos).m)
-#send_mothership_to_babyship(mother,baby)
-
-baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
-mother.simple_goto(baby_pickup_location)
-while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
-    time.sleep(.5)
-    print("mother flying to baby")
 
 
-offset = [-PICKUP_DISTANCE, 0, PICKUP_HEIGHT]
-fly_location = meter_offset_to_coords(offset, mother)
 
-baby_pickup_location = LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])
-print("mother flying behind baby")
-mother.simple_goto(baby_pickup_location)
-while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
-    time.sleep(.5)
+#one line function to send mother to a location behind the babyship. Can be repeated as many times as needed after it executes. No timeout is used so if WAYPOINT_LIMIT is not reached code will loop.
+send_mothership_to_babyship()
 
 """
-have camera locate the light on top of the loops
+have camera locate the color on top of the loops
 fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
 close the servo and take off
 fly to set altitude
@@ -347,7 +333,7 @@ return to home and land
 """
 
 #code for closing the servo
-
+condition_yaw(mother, 0)
 print('LANDING NEAR BABY')
 if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     # Land Copter
