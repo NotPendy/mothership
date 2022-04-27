@@ -236,6 +236,7 @@ print('Succesfully connected to babyship')
 """
 Listens for RC_CHANNELS mavlink messages with the goal of determining when the RCIN_4 joystick
 has returned to center for two consecutive seconds.
+
 """
 @mother.on_message('RC_CHANNELS')
 def rc_listener(self, name, message):
