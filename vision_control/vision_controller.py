@@ -79,6 +79,19 @@ class Vision_Controller :
             units_per_side *= 2
 
     '''
+        Translating seek
+    '''
+    def translate_seek(self, show = False) :
+
+        unit_length = 1
+        units_per_side = 2
+
+        while True :
+            if self.__slide__(units_per_side, unit_length, show=show) :
+                return True
+  
+
+    '''
         Centers drone camera on target ball horizontally, drone advances toward target (baby).
         
         Continually reads in frames of video and sends them out to be processed.
@@ -155,6 +168,14 @@ class Vision_Controller :
         for _ in range(units_per_side) :
             self.vehicle.send_mavlink(self.__move_forward_meters_msg__(unit_length))
             print("forward")
+            time.sleep(5)
+    
+    def __slide__(self, units_per_side, unit_length, show=False) :
+
+        #move units_per_side units of unit_length forward.
+        for _ in range(units_per_side) :
+            self.vehicle.send_mavlink(self.__move_sideways_meters_msg__(unit_length))
+            print("sliding")
             time.sleep(5)
 
 
@@ -237,8 +258,25 @@ class Vision_Controller :
             0, 0,    # target system, target component
             mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
             0b110111000110, # type_mask (only speeds enabled)
-            distance, 0, 0, # x, y, z positions (not used)
+            distance, 0, 0, # x, y, z positions
             vel_forward, 0, 0, # x, y, z velocity in m/s
+            0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
+            0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
+
+        return msg
+    
+    '''
+        
+    '''
+    def __move_sideways_meters_msg__(self, distance, vel_forward=2):
+
+        msg = self.vehicle.message_factory.set_position_target_local_ned_encode(
+            0,       # time_boot_ms (not used)
+            0, 0,    # target system, target component
+            mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
+            0b110111000101, # type_mask (only speeds enabled)
+            0, distance, 0, # x, y, z positions
+            0, vel_forward, 0, # x, y, z velocity in m/s
             0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 

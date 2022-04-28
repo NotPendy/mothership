@@ -17,7 +17,7 @@ from pymavlink import mavutil
 from imutils.video import VideoStream
 
 # Desired altitude (in meters) to takeoff to
-TARGET_ALTITUDE = 2.5
+TARGET_ALTITUDE = 10
 # Portion of TARGET_ALTITUDE at which we will break from takeoff loop
 ALTITUDE_REACH_THRESHOLD = 0.95
 # Maximum distance (in meters) from waypoint at which drone has "reached" waypoint
@@ -102,6 +102,6 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 vision_controller = Vision_Controller(vehicle)
 
 try :
-    vision_controller.center_in_direction(horizontal=True,advance=False, show=True)
+    vision_controller.center_in_direction(horizontal=True,advance=True, show=True)
 finally :
     vehicle.close()

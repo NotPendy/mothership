@@ -23,9 +23,9 @@ class Frame_Processor:
 
     # region [init]
 
-    MAX_YAW_RATE = np.pi / 8
+    MAX_YAW_RATE = np.pi / 4
     MAX_VERTICAL_SPEED = .1
-    FORWARD_VELOCITY = .1
+    FORWARD_VELOCITY = 2
 
     CENTERED_TOLERANCE_HORIZONTAL = .05
     CENTERED_TOLERANCE_VERTICAL = .05
@@ -96,6 +96,7 @@ class Frame_Processor:
         if not self.centered_horizontally :
             return self.__center_red__(horizontal=True)
     
+        print("advancing")
         return self.__advance__(frame)
 
     '''
@@ -172,7 +173,7 @@ class Frame_Processor:
                 return self.__stop__()
         
         #call center red to make any angular adjustments
-        cmd_vel = self.__center_red__(self, frame, modify_conditions=False, record=False)
+        cmd_vel, tmp = self.__center_red__(self, modify_conditions=False, record=False)
         cmd_vel.forward = self.FORWARD_VELOCITY
 
         #record value and time of last cmd_vel published

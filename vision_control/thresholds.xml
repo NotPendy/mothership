@@ -1,41 +1,15 @@
 <thresholds>
 
     <default>
-        <thresh_1>
-            <hmin>140</hmin>
-            <smin>31</smin>
-            <vmin>126</vmin>
-            <hmax>169</hmax>
-            <smax>160</smax>
-            <vmax>255</vmax>
-        </thresh_1>
-    
-        <thresh_2>
-            <hmin>140</hmin>
-            <smin>69</smin>
-            <vmin>180</vmin>
-            <hmax>199</hmax>
-            <smax>170</smax>
-            <vmax>255</vmax>
-        </thresh_2>
-
-	<thresh_3>
-            <hmin>136</hmin>
-            <smin>65</smin>
-            <vmin>29</vmin>
-            <hmax>181</hmax>
+        
+         <thresh_1>
+            <hmin>168</hmin>
+            <smin>105</smin>
+            <vmin>140</vmin>
+            <hmax>270</hmax>
             <smax>255</smax>
-            <vmax>168</vmax>
-        </thresh_3>
-
-	<thresh_3>
-            <hmin>139</hmin>
-            <smin>61</smin>
-            <vmin>76</vmin>
-            <hmax>184</hmax>
-            <smax>90</smax>
-            <vmax>136</vmax>
-        </thresh_3>
+            <vmax>247</vmax>
+        </thresh_1>
 
     </default>
 
@@ -107,21 +81,12 @@
 
     <pink>
         <thresh_1>
-            <hmin>11</hmin>
-            <smin>21</smin>
-            <vmin>31</vmin>
-            <hmax>41</hmax>
-            <smax>51</smax>
-            <vmax>61</vmax>
+            <hmin>168</hmin>
+            <smin>105</smin>
+            <vmin>140</vmin>
+            <hmax>270</hmax>
+            <smax>255</smax>
+            <vmax>247</vmax>
         </thresh_1>
-    
-        <thresh_2>
-            <hmin>101</hmin>
-            <smin>201</smin>
-            <vmin>301</vmin>
-            <hmax>401</hmax>
-            <smax>501</smax>
-            <vmax>601</vmax>
-        </thresh_2>
     </pink>
 </thresholds>
