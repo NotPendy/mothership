@@ -354,14 +354,19 @@ p.ChangeDutyCycle(PICKUP_PWM)
 """
 put vision stuff to attempt to skewer here
 """
+vision_controller = Vision_Controller(mother)
+try :
+    vision_controller.translate_seek(show=True)
+    vision_controller.center_in_direction(horizontal=False,advance=False, show=True)
+    vision_controller.center_in_direction(horizontal=True,advance=True, show=True)
+finally :
+    p.ChangeDutyCycle(HOLD_PWM)
+    # Stay connected to vehicle until landed and disarmed
+    while mother.armed:
+        time.sleep(1)
 
-p.ChangeDutyCycle(HOLD_PWM)
-# Stay connected to vehicle until landed and disarmed
-while mother.armed:
-    time.sleep(1)
+    print("Done!")
 
-print("Done!")
-
-# Close vehicle object before exiting script
-baby.close()
-mother.close()
+    # Close vehicle object before exiting script
+    baby.close()
+    mother.close()
