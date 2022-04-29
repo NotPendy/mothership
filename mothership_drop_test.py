@@ -356,7 +356,7 @@ vision_controller = Vision_Controller(mother)
 
 try :
     vision_controller.center_in_direction(horizontal=False)
-    vision_controller.center_in_direction(horizontal=True)4
+    vision_controller.center_in_direction(horizontal=True)
 finally :
 
     #code for closing the servo
