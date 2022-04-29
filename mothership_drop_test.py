@@ -36,7 +36,7 @@ VELOCITY_DIFFERENCE = 1
 # variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
-PICKUP_HEIGHT = 10
+PICKUP_HEIGHT = 1.5
 #distance mothership should be from the babyship to begin locating it with the camera in meters
 PICKUP_DISTANCE = 2.5
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
@@ -54,7 +54,7 @@ def send_mothership_to_babyship():
     Relies on the babyship 
     """
     #flying mother to babyship at PICKUP_HEIGHT meters above
-    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
+    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, TARGET_ALTITUDE)
     mother.simple_goto(baby_pickup_location)
     print("mother flying to baby")
     while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
