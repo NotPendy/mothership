@@ -36,7 +36,7 @@ VELOCITY_DIFFERENCE = 1
 # variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
-PICKUP_HEIGHT = 1.5
+PICKUP_HEIGHT = 2
 #distance mothership should be from the babyship to begin locating it with the camera in meters
 PICKUP_DISTANCE = 2.5
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
@@ -48,20 +48,21 @@ DROP_PWM = 2.5
 #PWM to pickup the baby
 PICKUP_PWM = 6
 
+
 def send_mothership_to_babyship():
     """
     function to send the mothership to the babyship by flying above the location of the babyship at PICKUP_HEIGHT meters and then flying south of Babyship at PICKUP_DISTANCE meters.
     Relies on the babyship 
     """
     #flying mother to babyship at PICKUP_HEIGHT meters above
-    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, TARGET_ALTITUDE)
+    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
     mother.simple_goto(baby_pickup_location)
     print("mother flying to baby")
     while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
         time.sleep(.5)
         
     #updating the offset to the mother's current location - PICKUP_DISTANCE meters south
-    offset = [-PICKUP_DISTANCE, 0, PICKUP_HEIGHT]
+    offset = [-PICKUP_DISTANCE, 0, TARGET_ALTITUDE]
     fly_location = meter_offset_to_coords(offset, mother)
 
     baby_pickup_location = LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])
@@ -180,26 +181,6 @@ def climb_alt(drone, altitude):
     while drone.location.global_frame.alt < altitude*ALTITUDE_REACH_THRESHOLD:
         time.sleep(.5)
     
-def get_location_metres(original_location, dNorth, dEast, altitude):
-    """
-    Returns a LocationGlobal object containing the latitude/longitude `dNorth` and `dEast` metres from the 
-    specified `original_location`.
-
-    The function is useful when you want to move the vehicle around specifying locations relative to 
-    the current vehicle position.
-    The algorithm is relatively accurate over small distances (10m within 1km) except close to the poles.
-    For more information see:
-    http://gis.stackexchange.com/questions/2951/algorithm-for-offsetting-a-latitude-longitude-by-some-amount-of-meters
-    """
-    earth_radius=6378137.0 #Radius of "spherical" earth
-    #Coordinate offsets in radians
-    dLat = dNorth/earth_radius
-    dLon = dEast/(earth_radius*math.cos(math.pi*original_location.lat/180))
-
-    #New position in decimal degrees
-    newlat = original_location.lat + (dLat * 180/math.pi)
-    newlon = original_location.lon + (dLon * 180/math.pi)
-    return LocationGlobalRelative(newlat, newlon, altitude)
 
 def condition_yaw(drone ,heading, relative=False):
     """
@@ -282,14 +263,18 @@ def rc_listener(self, name, message):
 if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
     mother.mode = VehicleMode("ALT_HOLD")
 
+if baby.version.vehicle_type == mavutil.mavlink.MAV_TYPE_HEXAROTOR:
+    baby.mode = VehicleMode("ALT_HOLD")
     
 
 # Wait for pilot before proceeding. Both drones must be armed at about the same time or they quickly disarm.
-print('Waiting for safety pilot to arm only mothership')
+print('Waiting for safety pilot to arm both vehicles')
 
 
 # Wait until safety pilot arms drone
 while not mother.armed:
+    time.sleep(1)
+while not baby.armed:
     time.sleep(1)
     
 print('Armed...')
@@ -316,8 +301,6 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     print("Taking off!")
     p.start(2.5)
     time.sleep(1)
-    p.ChangeDutyCycle(HOLD_PWM)
-    time.sleep(1)
     mother.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
 
     while True:
@@ -327,13 +310,7 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
         time.sleep(.5)
     # yaw north
     condition_yaw(mother, 0)
-    currentLocation=mother.location.global_relative_frame
-    print("going 10 meters to the north to drop the baby")
-    targetLocation=get_location_metres(currentLocation, 10, 0, TARGET_ALTITUDE)
-    mother.simple_goto(targetLocation)
-    while (distanceToWaypoint(targetLocation) > WAYPOINT_LIMIT):
-        time.sleep(1)
-    #untested hover detection code the function drone_connected also does not work without hover/
+    #untested hover detection code the function drone_connected also does not work without hover
     #MotherCarryingBabyHover = mother.parameters['MOT_THR_HOVER']
 
     #print("Mother carrying baby hover: %s" % MotherCarryingBabyHover)
@@ -341,17 +318,6 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 """
 code here for mothership dropping the babyship
 """
-print("waiting for baby to be in throw mode")
-while baby.mode.name != "THROW":
-    time.sleep(1)
-print("waiting for baby to arm")
-while not baby.armed:
-    time.sleep(0.5)
-
-print("dropping the baby")
-p.ChangeDutyCycle(DROP_PWM)
-time.sleep(1)
-
 #mothership will wait for baby to land before attempting to go to its position
 print("waiting for baby to be in land mode")
 while baby.mode != VehicleMode("LAND"):
@@ -373,37 +339,28 @@ print("baby lon:", baby.location.global_frame.lon)
 #one line function to send mother to a location behind the babyship. Can be repeated as many times as needed after it executes. No timeout is used so if WAYPOINT_LIMIT is not reached code will loop.
 send_mothership_to_babyship()
 
+
+#code for closing the servo
+condition_yaw(mother, 0)
+print('LANDING NEAR BABY')
+if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
+    # Land Copter
+    mother.mode = VehicleMode("LAND")
+
+mother.mode = VehicleMode("GUIDED")
+mother.simple_takeoff(PICKUP_HEIGHT)
+
 """
-have camera locate the color on top of the loops
-fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
+put vision stuff to attempt to skewer here
+then close servo
 """
 
-vision_controller = Vision_Controller(mother)
-
-try :
-    vision_controller.center_in_direction(horizontal=False)
-    vision_controller.center_in_direction(horizontal=True)
-finally :
-
-    #code for closing the servo
-    p.ChangeDutyCycle(PICKUP_PWM)
+# Stay connected to vehicle until landed and disarmed
+while mother.armed:
     time.sleep(1)
-    condition_yaw(mother, 0)
-    print('LANDING NEAR BABY')
-    if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
-        # Land Copter
-        mother.mode = VehicleMode("LAND")
 
+print("Done!")
 
-    # Stay connected to vehicle until landed and disarmed
-    while mother.armed:
-        time.sleep(1)
-
-    print("Done!")
-
-    # Close vehicle object before exiting script
-    baby.close()
-    mother.close()
-
-    p.stop()
-    GPIO.cleanup()
+# Close vehicle object before exiting script
+baby.close()
+mother.close()
