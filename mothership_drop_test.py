@@ -11,7 +11,7 @@ import sys
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 import RPi.GPIO as GPIO
-
+from vision_control.vision_controller import Vision_Controller
 
 servoPIN = 25
 GPIO.setmode(GPIO.BCM)
@@ -352,25 +352,32 @@ have camera locate the color on top of the loops
 fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
 """
 
-#code for closing the servo
-p.ChangeDutyCycle(PICKUP_PWM)
-time.sleep(1)
-condition_yaw(mother, 0)
-print('LANDING NEAR BABY')
-if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
-    # Land Copter
-    mother.mode = VehicleMode("LAND")
+vision_controller = Vision_Controller(mother)
 
+try :
+    vision_controller.center_in_direction(horizontal=False)
+    vision_controller.center_in_direction(horizontal=True)4
+finally :
 
-# Stay connected to vehicle until landed and disarmed
-while mother.armed:
+    #code for closing the servo
+    p.ChangeDutyCycle(PICKUP_PWM)
     time.sleep(1)
+    condition_yaw(mother, 0)
+    print('LANDING NEAR BABY')
+    if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
+        # Land Copter
+        mother.mode = VehicleMode("LAND")
 
-print("Done!")
 
-# Close vehicle object before exiting script
-baby.close()
-mother.close()
+    # Stay connected to vehicle until landed and disarmed
+    while mother.armed:
+        time.sleep(1)
 
-p.stop()
-GPIO.cleanup()
+    print("Done!")
+
+    # Close vehicle object before exiting script
+    baby.close()
+    mother.close()
+
+    p.stop()
+    GPIO.cleanup()
