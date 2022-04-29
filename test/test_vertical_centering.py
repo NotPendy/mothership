@@ -17,7 +17,7 @@ from dronekit import connect, VehicleMode, LocationGlobalRelative
 from pymavlink import mavutil
 from imutils.video import VideoStream
 
-frame_processor = Frame_Processor("default",rotating_seek=False)
+frame_processor = Frame_Processor("orange",rotating_seek=False)
 
 #initialize video capture
 cap = VideoStream(src=0).start()

@@ -206,4 +206,14 @@
         </thresh_222>
 -->
     </pink>
+    <orange>
+        <thresh_222>
+            <hmin>3</hmin>
+            <smin>67</smin>
+            <vmin>109</vmin>
+            <hmax>21</hmax>
+            <smax>215</smax>
+            <vmax>169</vmax>
+        </thresh_222>
+    </orange>
 </thresholds>

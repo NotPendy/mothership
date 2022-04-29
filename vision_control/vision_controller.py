@@ -18,6 +18,8 @@ class Vision_Controller :
 
     # region [init]
 
+    DEFAULT_VELOCITY = 2
+
     '''
         start video capture, drone connection
     '''
@@ -43,6 +45,8 @@ class Vision_Controller :
     # region [High Level Algorithms]
 
     '''
+        UNTESTED, NOT USED
+
         Drone creates increasingly large squares.
         The drone will stop at fixed intervals in its travel to seek for the red ball.
         When the drone finds the ball, it exits the loop.
@@ -79,17 +83,41 @@ class Vision_Controller :
             units_per_side *= 2
 
     '''
-        Translating seek
+        slides 1 meter to the right, looks for blobs, slides back to middle, looks for blobs, 
+        slides 1 meter to the left, looks for blobs, slides back to middle, looks for blobs
     '''
     def translate_seek(self, show = False) :
 
         unit_length = 1
-        units_per_side = 2
+        units_per_side = 1
 
         while True :
-            if self.__slide__(units_per_side, unit_length, show=show) :
-                return True
-  
+
+            # Slide right
+            self.__slide__(units_per_side, unit_length, 1, show=show)
+            # Read 10 frames and check for target
+            if self.__check_10_frames__(show=show) :
+                return
+            
+            # Slide left
+            self.__slide__(units_per_side, unit_length, -1, show=show)
+            # Read 10 frames and check for target
+            if self.__check_10_frames__(show=show) :
+                return
+            
+            # Slide left
+            self.__slide__(units_per_side, unit_length, -1, show=show)
+            # Read 10 frames and check for target
+            if self.__check_10_frames__(show=show) :
+                return
+            
+            # Slide right
+            self.__slide__(units_per_side, unit_length, 1, show=show)
+            # Read 10 frames and check for target
+            if self.__check_10_frames__(show=show) :
+                return
+            
+
 
     '''
         Centers drone camera on target ball horizontally, drone advances toward target (baby).
@@ -150,6 +178,8 @@ class Vision_Controller :
     # region [Primary Helpers]
 
     '''
+        NOT FULLY TESTED
+
         Drone checks in a circle for red ball.
         Drone rotates given amount.
         Drone makes units_per_side units of unit_length forward.
@@ -170,13 +200,30 @@ class Vision_Controller :
             print("forward")
             time.sleep(5)
     
-    def __slide__(self, units_per_side, unit_length, show=False) :
+    '''
+        Commands drone to slide sideways a certain distance, while maintaining the direction it's facing.
+        direction is 1 for right, -1 for left.
+        units length is distance to be moved
+        units_per_side is number of times to move
+    '''
+    def __slide__(self, units_per_side, unit_length, direction, show=False) :
 
         #move units_per_side units of unit_length forward.
         for _ in range(units_per_side) :
-            self.vehicle.send_mavlink(self.__move_sideways_meters_msg__(unit_length))
+            self.vehicle.send_mavlink(self.__move_sideways_meters_msg__(unit_length, vel_sideways=direction*self.DEFAULT_VELOCITY))
             print("sliding")
-            time.sleep(5)
+            time.sleep(10)
+    
+    def __check_10_frames__(self, show=False) :
+        for _ in range(10) :
+            frame = self.cap.read()
+            if frame is None:
+                print("Can't receive frame (stream end?). Exiting ...")
+                return True
+
+            if self.frame_processor.process_frame_check_blob(frame, show=show) :
+                print("found")
+                return True
 
 
     # endregion
@@ -203,7 +250,7 @@ class Vision_Controller :
                 frames_with_red = 0
 
                 for _ in range(5) :
-                    red_in_frame = self.frame_processor.process_frame_check_red(frame, show=show)
+                    red_in_frame = self.frame_processor.process_frame_check_blob(frame, show=show)
                     if red_in_frame :
                         frames_with_red += 1
 
@@ -268,15 +315,15 @@ class Vision_Controller :
     '''
         
     '''
-    def __move_sideways_meters_msg__(self, distance, vel_forward=2):
+    def __move_sideways_meters_msg__(self, distance, vel_sideways):
 
         msg = self.vehicle.message_factory.set_position_target_local_ned_encode(
             0,       # time_boot_ms (not used)
             0, 0,    # target system, target component
             mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
-            0b110111000101, # type_mask (only speeds enabled)
+            0b000111000101, # type_mask (only speeds enabled)
             0, distance, 0, # x, y, z positions
-            0, vel_forward, 0, # x, y, z velocity in m/s
+            0, vel_sideways, 0, # x, y, z velocity in m/s
             0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
             0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
