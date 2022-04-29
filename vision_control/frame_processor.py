@@ -57,8 +57,8 @@ class Frame_Processor:
     '''
         This function checks whether a red blob is in the frame
     '''
-    def process_frame_check_red(self, frame, show = False) :
-        self.__find_red_blobs__(frame, show=show)
+    def process_frame_check_blob(self, frame, show = False) :
+        self.__find_blobs__(frame, show=show)
 
         return self.in_frame
 
@@ -70,12 +70,12 @@ class Frame_Processor:
     def center_vertically(self, frame, show = False, stop_when_centered = True) :
 
         #Run blob detection on frame
-        self.__find_red_blobs__(frame, show=show)
+        self.__find_blobs__(frame, show=show)
 
         if not stop_when_centered : self.centered_vertically = False
 
         if not self.centered_vertically :
-            return self.__center_red__(horizontal=False)
+            return self.__center_blob__(horizontal=False)
 
         else :
             return self.__stop__()
@@ -88,13 +88,13 @@ class Frame_Processor:
     def center_horizontally_and_advance(self, frame, show = False, advance = True):
 
         #Run blob detection on frame
-        self.__find_red_blobs__(frame, show=show)
+        self.__find_blobs__(frame, show=show)
 
         if not advance : self.centered_horizontally = False
 
         #If the camera is not centered on red, center on red
         if not self.centered_horizontally :
-            return self.__center_red__(horizontal=True)
+            return self.__center_blob__(horizontal=True)
     
         print("advancing")
         return self.__advance__(frame)
@@ -113,7 +113,7 @@ class Frame_Processor:
     '''
         Commands drone to make necessary adjustments to center camera on red ball
     '''
-    def __center_red__(self, horizontal, modify_conditions = True, record = True) :
+    def __center_blob__(self, horizontal, modify_conditions = True, record = True) :
 
         #if we don't detect a blob, seek
         if not self.in_frame:
@@ -173,7 +173,7 @@ class Frame_Processor:
                 return self.__stop__()
         
         #call center red to make any angular adjustments
-        cmd_vel, tmp = self.__center_red__(self, modify_conditions=False, record=False)
+        cmd_vel, tmp = self.__center_blob__(self, modify_conditions=False, record=False)
         cmd_vel.forward = self.FORWARD_VELOCITY
 
         #record value and time of last cmd_vel published
@@ -227,7 +227,7 @@ class Frame_Processor:
         Takes in image and finds keypoints. 
 
     '''
-    def __find_red_blobs__(self, frame, show = False) :
+    def __find_blobs__(self, frame, show = False) :
 
         # set red_in_frame to false, only set to true if we find ball in frame
         self.in_frame = False
@@ -264,7 +264,6 @@ class Frame_Processor:
                 center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
 
                 # only proceed if the radius meets a minimum size
-                #print(radius)
                 if radius > 5:
                     # draw the circle and centroid on the frame,
                     # then update the list of tracked points
@@ -276,8 +275,8 @@ class Frame_Processor:
                     self.in_frame = True
 
                     #record horizontal, vert position of blob
-                    self.red_horizontal_pos = x
-                    self.red_vertical_pos = y
+                    self.horizontal_pos = x
+                    self.vertical_pos = y
 
         if show :
             # update the points queue
@@ -297,7 +296,7 @@ class Frame_Processor:
 
             # show the frame to our screen
             cv2.imshow("Frame", frame)
-            cv2.imshow("Red Mask", mask)
+            cv2.imshow("Mask", mask)
             key = cv2.waitKey(1) & 0xFF
 
     '''
@@ -311,8 +310,8 @@ class Frame_Processor:
         cols = float(self.im.shape[1])
         center_x = 0.5 * cols
         center_y = 0.5 * rows
-        x = (self.red_horizontal_pos - center_x) / center_x
-        y = (self.red_vertical_pos - center_y) / center_y
+        x = (self.horizontal_pos - center_x) / center_x
+        y = (self.vertical_pos - center_y) / center_y
         return (x, y)
 
 
