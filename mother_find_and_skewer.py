@@ -349,12 +349,13 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
 mother.mode = VehicleMode("GUIDED")
 mother.simple_takeoff(PICKUP_HEIGHT)
+p.ChangeDutyCycle(PICKUP_PWM)
 
 """
 put vision stuff to attempt to skewer here
-then close servo
 """
 
+p.ChangeDutyCycle(HOLD_PWM)
 # Stay connected to vehicle until landed and disarmed
 while mother.armed:
     time.sleep(1)
