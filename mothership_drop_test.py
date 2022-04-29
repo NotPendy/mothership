@@ -373,6 +373,11 @@ print("baby lon:", baby.location.global_frame.lon)
 #one line function to send mother to a location behind the babyship. Can be repeated as many times as needed after it executes. No timeout is used so if WAYPOINT_LIMIT is not reached code will loop.
 send_mothership_to_babyship()
 
+condition_yaw(mother, 0)
+time.sleep(5)
+
+p.ChangeDutyCycle(PICKUP_PWM)
+
 """
 have camera locate the color on top of the loops
 fly forward making adjustments to the yaw to keep the red dot in the center stripe of the cameras view fly a few feet past to make sure it is through.
@@ -381,19 +386,14 @@ fly forward making adjustments to the yaw to keep the red dot in the center stri
 vision_controller = Vision_Controller(mother)
 
 try :
-    vision_controller.center_in_direction(horizontal=False)
+    vision_controller.translate_seek(show=)
+    vision_controller.center_in_direction(horizontal=False, show=True)
     vision_controller.center_in_direction(horizontal=True)
 finally :
 
     #code for closing the servo
-    p.ChangeDutyCycle(PICKUP_PWM)
+    p.ChangeDutyCycle(HOLD_PWM)
     time.sleep(1)
-    condition_yaw(mother, 0)
-    print('LANDING NEAR BABY')
-    if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
-        # Land Copter
-        mother.mode = VehicleMode("LAND")
-
 
     # Stay connected to vehicle until landed and disarmed
     while mother.armed:

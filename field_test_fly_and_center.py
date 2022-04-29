@@ -371,7 +371,9 @@ while True:
 vision_controller = Vision_Controller(mother)
 
 try :
-    vision_controller.center_in_direction(horizontal=True,advance=False, show=True)
+    vision_controller.translate_seek(show=True)
+    vision_controller.center_in_direction(horizontal=False,advance=False, show=True)
+    vision_controller.center_in_direction(horizontal=True,advance=True, show=True)
 finally :
     # Stay connected to vehicle until landed and disarmed
     while mother.armed:
