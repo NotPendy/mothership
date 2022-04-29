@@ -25,10 +25,10 @@ class Frame_Processor:
 
     MAX_YAW_RATE = np.pi / 4
     MAX_VERTICAL_SPEED = .1
-    FORWARD_VELOCITY = 2
+    FORWARD_VELOCITY = .5
 
     CENTERED_TOLERANCE_HORIZONTAL = .05
-    CENTERED_TOLERANCE_VERTICAL = .05
+    CENTERED_TOLERANCE_VERTICAL = .02
 
     '''
         Constructor sets up necessary blob detection parameters
@@ -122,13 +122,14 @@ class Frame_Processor:
 
         #get normalized x position of blob in frame
         horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__()
+	vertical position_blob = vertical_position_blob - .7
 
         print(horizontal_position_blob) if horizontal else print(vertical_position_blob)
 
         #calculate commanded velocity based off of blob location in frame
         forward_rate = 0.0
         #TODO: are signs right on these?
-        vertical_rate = 0.0 if horizontal else self.MAX_VERTICAL_SPEED * vertical_position_blob
+        vertical_rate = 0.0 if horizontal else self.MAX_VERTICAL_SPEED * (vertical_position_blob)
         yaw_rate = self.MAX_YAW_RATE * horizontal_position_blob if horizontal else 0.0
         cmd_vel = Commanded_Velocity(forward_rate, vertical_rate, yaw_rate)
 
@@ -141,8 +142,9 @@ class Frame_Processor:
         
         elif modify_conditions and not horizontal :
             #if the red ball's position within frame is within tolerance, set centered_red flag to true
-            if math.fabs(vertical_position_blob) < self.CENTERED_TOLERANCE_VERTICAL :
+            if math.fabs(vertical_position_blob) < self.CENTERED_TOLERANCE_VERTICAL:
                 self.centered_vertically = True
+		cmd_vel, tmp = self.__stop__() 
             else :
                 self.centered_vertically = False
 

@@ -36,7 +36,7 @@ VELOCITY_DIFFERENCE = 1
 # variable to determine how much of a difference in posistion two objects can be and not be considered connected and flying together
 POSITION_DIFFERENCE = 1
 #height the mothership should be at when picking up the babyship on the ground in meters
-PICKUP_HEIGHT = 2
+PICKUP_HEIGHT = 1.5
 #distance mothership should be from the babyship to begin locating it with the camera in meters
 PICKUP_DISTANCE = 2.5
 #max difference in the amount of thrust needed to hover the mothership before release and after retreiving the babyship. Should hypothetically be 0 if babyship is perfectly secured in same position.
@@ -55,14 +55,14 @@ def send_mothership_to_babyship():
     Relies on the babyship 
     """
     #flying mother to babyship at PICKUP_HEIGHT meters above
-    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, PICKUP_HEIGHT)
+    baby_pickup_location = LocationGlobalRelative(baby.location.global_frame.lat, baby.location.global_frame.lon, TARGET_ALTITUDE)
     mother.simple_goto(baby_pickup_location)
     print("mother flying to baby")
     while(distanceToWaypoint(baby_pickup_location, mother) > WAYPOINT_LIMIT):
         time.sleep(.5)
         
     #updating the offset to the mother's current location - PICKUP_DISTANCE meters south
-    offset = [-PICKUP_DISTANCE, 0, TARGET_ALTITUDE]
+    offset = [-PICKUP_DISTANCE, 0, PICKUP_HEIGHT]
     fly_location = meter_offset_to_coords(offset, mother)
 
     baby_pickup_location = LocationGlobalRelative(fly_location[0], fly_location[1], fly_location[2])
@@ -237,11 +237,11 @@ if not connection_string2:
 
 # Connect to the Vehicle
 print('Connecting to main vehicle on: %s' % connection_string)
-mother = connect(connection_string, wait_ready=True)
+mother = connect(connection_string, wait_ready=True, timeout=60)
 print('Succesfully connected to mothership')
 
 print('Connecting to second vehicle on: %s' %connection_string2)
-baby = connect(connection_string2, wait_ready=True)
+baby = connect(connection_string2, wait_ready=True, timeout=60)
 print('Succesfully connected to babyship')
 
 
@@ -299,7 +299,7 @@ if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     
     # Takeoff to short altitude
     print("Taking off!")
-    p.start(2.5)
+    p.start(5)
     time.sleep(1)
     mother.simple_takeoff(TARGET_ALTITUDE)  # Take off to target altitude
 
@@ -342,13 +342,8 @@ send_mothership_to_babyship()
 
 #code for closing the servo
 condition_yaw(mother, 0)
-print('LANDING NEAR BABY')
-if mother.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
-    # Land Copter
-    mother.mode = VehicleMode("LAND")
+time.sleep(5)
 
-mother.mode = VehicleMode("GUIDED")
-mother.simple_takeoff(PICKUP_HEIGHT)
 p.ChangeDutyCycle(PICKUP_PWM)
 
 """
@@ -358,6 +353,7 @@ vision_controller = Vision_Controller(mother)
 try :
     vision_controller.translate_seek(show=True)
     vision_controller.center_in_direction(horizontal=False,advance=False, show=True)
+    time.sleep(2)
     vision_controller.center_in_direction(horizontal=True,advance=True, show=True)
 finally :
     p.ChangeDutyCycle(HOLD_PWM)

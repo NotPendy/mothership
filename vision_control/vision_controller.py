@@ -93,6 +93,9 @@ class Vision_Controller :
 
         while True :
 
+            if self.__check_10_frames__(show=show) :
+                return
+
             # Slide right
             self.__slide__(units_per_side, unit_length, 1, show=show)
             # Read 10 frames and check for target
