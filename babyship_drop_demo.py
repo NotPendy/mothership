@@ -272,7 +272,7 @@ if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
 
 
 
-
+condition_yaw(90)
 print('Landing')
 if vehicle.version.vehicle_type == mavutil.mavlink.MAV_TYPE_QUADROTOR:
     # Land Copter
