@@ -21,10 +21,13 @@ Commands for actual running
 for windows baby gcs
 mavproxy --master=COM3 --baudrate=460800 --out=localhost:14552 --out=localhost:14561 --out=udpout:192.168.1.140:14562
 
+python3 babyship.py --connect 192.168.1.156:14561
 
 for baby GCS 14552, for baby app 14561, and for mother companion computer 14562
 
 for linux on pi
-mavproxy.py --master=/dev/  --out=udpout:192.168.1.156:14551 --out=localhost:14560
+mavproxy.py --master=/dev/ttyACM0  --out=udpout:192.168.1.156:14551 --out=localhost:14560
 
-mothership.py -connect localhost:14560 --connect2 192.168.1.140:14562
+mothership.py -connect localhost:14560 --connect2 192.168.1.140:14562   
+
+for mother GCS 14551 and for mother app 14560

@@ -13,7 +13,7 @@ ECE492/592 Mothership project
 - `pip3 install -U numpy`
 
 ## Servo Dependencies (Pi)
-- `pip3 install gpiozero`
+- `pip3 install RPi.GPIO`
 
 ## Drone Dependencies (Pi and GCS)
 - `pip3 install dronekit`
