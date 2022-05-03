@@ -21,10 +21,7 @@
     This can all be done simply with a few function calls.
 '''
 
-from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
 from pymavlink import mavutil
-import cv2
-import os
 from imutils.video import VideoStream
 from vision_control.frame_processor import Frame_Processor
 import time
