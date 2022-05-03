@@ -5,34 +5,108 @@
 </style>
 </head>
 <body>
-<h1>Practical Problems:</h1>
+<h1>Practical Problems and Advice</h1>
+<h2>Practical Problems</h2>
 
 <ul>
     <li>
-        <h3>Vision<h3>
-        <ul>
-            <li>
-                <h4>Hard to Get Good Thresholds</h4>
-                <br/>
-                <p></p>
-            </li>
-            <li>
-                <h4>Dark Red Target Confused for Clay</h4>
-                <br/>
-                <p></p>
-            </li>
-        </ul>
+        <h3>Environment Setup<h3>
     </li>
+    <ul>
+        <li>
+            <h4>Issues With Raspberry Pi OS Legacy Camera Support</h4>
+            Iniitally we had planned on using "Bullseye", the latest release of Raspberry Pi OS, for our companion computer OS. <br/>
+            However we also needed to enable legacy camera support for our project and this was causing issues. <br/>
+            For example: enabling legacy camera support on Bullseye had a problem where it would disable VNC. This was not documented<br/>
+            anywhere either so it took quite a while to figure out what the issue was. In the end, we ended up solving this by using<br/>
+            the legacy OS "Buster" instead.<br/>
+            
+        </li>
+
+        <li>
+            <h4>Issues Running SITL in Docker Container on Windows</h4>
+            Running SITL in a docker container on Windows and trying to connect to it via mavproxy and the IP 172.17.0.2<br/>
+            was problematic because in Windows mavproxy cannot directly access that port. This was fixed by running the docker<br/>
+            container with the -p argument to expose the port : 'docker run -it -p 5760:5760 --rm fixed', and connecting <br/>
+            to it through localhost: 'mavproxy.exe --master=tcp:localhost:5760 --out=udp:127.0.0.1:14551 --out=udp:127.0.0.1:14560'<br/>
+            
+        </li>
+    </ul>
+
+    <li>
+        <h3>Vision and Pickup<h3>
+    </li>
+    <ul>
+        <li>
+            <h4>Hard to Get Good Thresholds at the Field</h4>
+            Initially the way we were doing HSV thresholds, we were doing them  using the payload detached from the drone.<br/>
+            We would have someone hold the payload, another person walk off and hold the target, and another person enter the thresholds.<br/>
+            <br/><br/>
+            This was bad because it required two people to sit around and do nothing and took too much time at the field. It also didn't <br/>
+            result in good thresholds, because it was hard to get everyone to hold everything steady and everyone was also kind of<br/>
+            in a rush. Also the thresholds weren't good beause in the real system the drone would be flying and their would be <br/>
+            propellers in the shot and visual banding.
+            <br/><br/>
+            The way we fixed this was by attaching the payload to the drone, having Mark fly the drone around and having a group member walk around<br/>
+            in front of the drone holding the target. The output of the drone's camera was displayed on someone's laptop via VNC and being <br/>
+            screen recorded. So later that night someone could go home and set the thresholds based off of the video, where he could take<br/>
+            a bunch of frames with different lighting and optimize for them. This ended up working a lot better and the next field test<br/>
+            those thresholds worked perfectly.<br/>
+        </li>
+        <li>
+            <h4>Dark Red Target Confused for Clay</h4>
+            At one point we were using a dark, pastel red target but the drone kept getting confused between the target and red clay, <br/>
+            so we changed to a bright pink target.<br/>
+        </li>
+        <li>
+            <h4>Loss of Height when Advancing</h4>
+            The horizontal and vertical alignments on the target both seem to work, but when the drone advances towards the target it<br/>
+            quickly goes to the ground. We didn't have time to solve this, but it's likely due to the fact that controlling the drone's<br/>
+            velocity causes it to ignore readings from the lidar sensor. This could be fixed in at least two ways: by continuing to <br/>
+            issue the drone vertical velocities to center it on the target while it advances or by telling the drone to hover at the<br/>
+            height it's left at after vertical alignment (using the lidar sensor).<br/> 
+        </li>
+    </ul>
 
     <li>
         <h3>Mission Code<h3>
-        <ul>
-            <li>
-                <h4>Getting Two Drones on SITL</h4>
-                <br/>
-                <p></p>
-            </li>
-        </ul>
     </li>
+    <ul>
+        <li>
+            <h4>Getting Two Drones on SITL</h4>
+        </li>
+    </ul>
+
+
+    <li>
+        <h3>Babyship Assembly<h3>
+    </li>
+    <ul>
+        <li>
+            <h4>Insert problem here</h4>
+        </li>
+    </ul>
 </ul>
 
+<h2>Advice for Future Students</h2>
+<ul>
+    <li>
+        Develop on Ubuntu. Don't use Windows. If you really must, you can use WSL but every piece of<br/>
+        documentation ever is written for linux and trying to get things running on Windows wastes so<br/>
+        much time. Setting up dual boot is far easier than you might think.<br/>
+    </li>
+    <br/>
+    <li>
+        Try and look at the documentation for libraries you use and gain an understanding of why things work.<br/>
+        This doesn't mean you can't ever copy existing stuff, but try and understand why that stuff works.<br/>
+    </li>
+    <br/>
+    <li>
+        For the vision control of this project, don't change the general paradigm of the vision_controller<br/>
+        reading in a frame, sending it to the frame_processor, recieving a commmanded velocity, and telling<br/>
+        the drone to move by that commanded velocity. You certainly may find that it's necessary to change<br/>
+        parameters in how this movement is done and I encourage you to do so but the general flow of control<br/>
+        makes sense, has worked in testing, and has a great deal more potential for precise control than <br/>
+        waypoint-based control in my opinion.<br/>
+    </li>
+</ul>
