@@ -29,6 +29,7 @@ class Frame_Processor:
 
     CENTERED_TOLERANCE_HORIZONTAL = .05
     CENTERED_TOLERANCE_VERTICAL = .02
+    VERTICAL_OFFSET = .1
 
     '''
         Constructor sets up necessary blob detection parameters
@@ -122,7 +123,7 @@ class Frame_Processor:
 
         #get normalized x position of blob in frame
         horizontal_position_blob, vertical_position_blob = self.__get_blob_relative_position__()
-	vertical position_blob = vertical_position_blob - .7
+        vertical_position_blob = vertical_position_blob - self.VERTICAL_OFFSET
 
         print(horizontal_position_blob) if horizontal else print(vertical_position_blob)
 
@@ -144,8 +145,8 @@ class Frame_Processor:
             #if the red ball's position within frame is within tolerance, set centered_red flag to true
             if math.fabs(vertical_position_blob) < self.CENTERED_TOLERANCE_VERTICAL:
                 self.centered_vertically = True
-		cmd_vel, tmp = self.__stop__() 
-            else :
+            cmd_vel, tmp = self.__stop__() 
+        else :
                 self.centered_vertically = False
 
         if record :
