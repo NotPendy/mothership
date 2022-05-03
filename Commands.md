@@ -1,5 +1,5 @@
 ## Commands for running SITL
--------------------------------------
+
 ### For Drone 1
 `
 sudo docker run -it --rm --env SYSID=0 fixed
@@ -30,9 +30,8 @@ in directory where python file is located (first connect string is mothership ad
 python3 mothership.py --connect 127.0.0.1:14560 --connect2 127.0.0.1:14561
 `
 
--------------------------------------
 ## Commands for actual running
--------------------------------------
+
 for windows baby gcs
 
 `
