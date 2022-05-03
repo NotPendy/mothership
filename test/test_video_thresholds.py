@@ -1,6 +1,7 @@
 '''
-    Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
-    horizontal position.
+    Continuously reads in frames of video, uses frame processor to track target and output position to terminal.
+
+    Good for testing thresholds on video collected from field.
 
     Author: Robby Rivenbark
 '''

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-usage: python square_off.py --connect <*connection_string>
-This script connects to the drone and waits until armed. When armed it will takeoff
-to 3m altitude, then navigate a 10x10 meter square. At each corner of the square the drone
-will wait for 5 seconds.
-"""
+'''
+    Commands the drone to take off and make a big round circle by setting forward velocity and yaw rate.
+    Used to test viability of SET_POSITION_TARGET_LOCAL_NED message for moving drone with velocity control.
+
+    Author: Robby Rivenbark
+'''
 
 from __future__ import print_function
 

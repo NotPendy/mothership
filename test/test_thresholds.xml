@@ -1,3 +1,7 @@
+<!-- Test thresholds, not for actual use and the numbers associated with them aren't particularly important.
+    Author: Robby Rivenbark
+-->
+
 <thresholds>
     <dark_red>
         <thresh_1>

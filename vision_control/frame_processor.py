@@ -1,9 +1,9 @@
 '''
     Author: Robby Rivenbark
-    Email: rsrivenb@ncsu.edu
+    Email: rsrivenb@ncsu.edu, robbyisgreat@gmail.com
 
-    Purpose: Maintains data and functionality for reading in a frame of video from the mothership and deciding what 
-    movements should be made. 
+    Purpose: Maintains data and functionality for reading in a frame of video from the mothership, deciding what movements
+    should be made, and outputting a commanded velocity.
     
     Does not directly interface with hardware, does not need to know where images are coming from or how the velocity
     information gets to the drone, it just uses these as input and output.
@@ -33,8 +33,12 @@ class Frame_Processor:
 
     '''
         Constructor sets up necessary blob detection parameters
+
+        threshold_color specifies which threshold colors to use from "thresholds.xml"
+
+        rotating seek specifies whether values to rotate will be given if sight of the target is lost while attempting to center.
     '''
-    def __init__(self, threshold_color, rotating_seek = True):
+    def __init__(self, threshold_color="default", rotating_seek = False):
 
         self.rotating_seek = rotating_seek
 

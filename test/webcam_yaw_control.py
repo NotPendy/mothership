@@ -2,6 +2,8 @@
     Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
     horizontal position.
 
+    Meant for use with arducopter in SITL.
+
     Author: Robby Rivenbark
 '''
 from pathlib import Path

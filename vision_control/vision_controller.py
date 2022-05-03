@@ -1,8 +1,24 @@
 '''
     Author: Robby Rivenbark
-    Email: rsrivenb@ncsu.edu
+    Email: rsrivenb@ncsu.edu, robbyisgreat@gmail.com
 
-    Purpose: To allow the mothership to locate the baby ship, face the baby ship, and advance toward the baby ship.
+    Purpose: To allow the mothership to locate the baby ship, center camera on the baby ship, and advance toward the baby ship.
+
+    Meant to take vehicle in constructor and then have high-level functions that you can easily call for seeking, centering.
+
+    e.g If you had a vehicle in a calling program you could initialize a vision controller:
+    vision_controller = Vision_Controller(vehicle)
+
+    you could then tell it to seek the target:
+    vision_controller.translate_seek()
+
+    center vertically:
+    vision_controller.center_in_direction(horizontal=False)
+
+    center horizontally:
+    vision_controller.center_in_direction(horizontal=True)
+
+    This can all be done simply with a few function calls.
 '''
 
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative
@@ -85,6 +101,8 @@ class Vision_Controller :
     '''
         slides 1 meter to the right, looks for blobs, slides back to middle, looks for blobs, 
         slides 1 meter to the left, looks for blobs, slides back to middle, looks for blobs
+
+        Currently not too smart but gets the job done. Could modify to make step start smaller and increase over time.
     '''
     def translate_seek(self, show = False) :
 
@@ -128,13 +146,18 @@ class Vision_Controller :
         Continually reads in frames of video and sends them out to be processed.
         Uses output of frame processor to command the drone to move.
 
-        Shouldn't change vertical position of drone, this function should only be called after
-        the target ball is in vision and is vertically aligned with camera.
+        If centering horizontally, the drone will advance after it is sufficiently centered.
 
         Returns True if image loop exits successfully (drone centers on target, advances to 
         target, follows through and stops) or False if the image loop ends in any other way.
+
+        @param horizontal: True if horizontal centering, False if vertical centering
+        @param stop: True if you want this function to naturally end, False if you want it to keep looping forever.
+        @param advance: True if you want the drone to advance after horizontal centering.
+        @param show: True if you want video output, False otherwise (must be false if running headless on pi without VNC)
+
     '''
-    def center_in_direction(self, horizontal, stop = True, show = False, advance=True, stop_when_centered=True) :
+    def center_in_direction(self, horizontal, stop = True, show = False, advance=True) :
 
         #initialize video capture
         #cap = VideoStream(src=0).start()
@@ -158,7 +181,7 @@ class Vision_Controller :
             if horizontal : 
                 cmd_vel, stopped = self.frame_processor.center_horizontally_and_advance(frame, advance=advance ,show=show)
             else :
-                cmd_vel, stopped = self.frame_processor.center_vertically(frame,stop_when_centered=stop_when_centered,show=show)
+                cmd_vel, stopped = self.frame_processor.center_vertically(frame,stop_when_centered=stop,show=show)
 
             #command drone to perform specified action
             self.vehicle.send_mavlink(self.__move_by_cmd_vel_msg__(cmd_vel))
@@ -181,7 +204,7 @@ class Vision_Controller :
     # region [Primary Helpers]
 
     '''
-        NOT FULLY TESTED
+        NOT FULLY TESTED, NOT IN USE FOR MAIN CODE.
 
         Drone checks in a circle for red ball.
         Drone rotates given amount.
@@ -217,6 +240,9 @@ class Vision_Controller :
             print("sliding")
             time.sleep(10)
     
+    '''
+        Checks next 10 frames of video and sees if target appears.
+    '''
     def __check_10_frames__(self, show=False) :
         for _ in range(10) :
             frame = self.cap.read()
@@ -234,6 +260,8 @@ class Vision_Controller :
     # region [Secondary Helpers]
 
     '''
+        NOT TESTED, TEST BEFORE USING.
+
         Rotates drone in a circle. Periodically checks to see if ball in frame.
     '''
     def __circle_seek__(self, show=False) :
@@ -316,7 +344,7 @@ class Vision_Controller :
         return msg
     
     '''
-        
+        Slides drone sideways by the specified distance w/ specified speed. Maintains yaw.
     '''
     def __move_sideways_meters_msg__(self, distance, vel_sideways):
 

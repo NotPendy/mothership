@@ -1,3 +1,10 @@
+'''
+    Tests that thresholds can be read in from an xml file in proper format.
+
+    Author: Robby Rivenbark
+'''
+
+
 import xml.etree.ElementTree as ET
 from pathlib import Path
 

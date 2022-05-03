@@ -1,6 +1,5 @@
 '''
-    Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
-    horizontal position.
+    Continuously reads in frames of video, outputs commanded vertical velocities to terminal based on blob position.
 
     Author: Robby Rivenbark
 '''

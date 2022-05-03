@@ -1,6 +1,6 @@
 '''
-    Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
-    horizontal position.
+    Test creating multiple masks using test_thresholds.xml, adding them all together w/ logical "or"
+    so parts that were white on any individual mask show as white on final mask.
 
     Author: Robby Rivenbark
 '''

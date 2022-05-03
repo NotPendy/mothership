@@ -1,3 +1,11 @@
+<!---
+    HSV thresholds for OpenCV to use to mask images.
+    One or multiple thresholds allowed for each color.
+
+    Author: Robby Rivenbark
+-->
+
+
 <thresholds>
 
     <default>
@@ -185,26 +193,6 @@
             <smax>180</smax>
             <vmax>140</vmax>
         </thresh_7>
-
-<!--
-        <thresh_111>
-            <hmin>168</hmin>
-            <smin>105</smin>
-            <vmin>140</vmin>
-            <hmax>270</hmax>
-            <smax>255</smax>
-            <vmax>247</vmax>
-        </thresh_111>
-
-        <thresh_222>
-            <hmin>151</hmin>
-            <smin>18</smin>
-            <vmin>184</vmin>
-            <hmax>162</hmax>
-            <smax>255</smax>
-            <vmax>251</vmax>
-        </thresh_222>
--->
     </pink>
     <orange>
         <thresh_222>

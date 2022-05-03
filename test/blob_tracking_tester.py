@@ -1,3 +1,9 @@
+'''
+	Testing blob tracking with green ball.
+
+	Author: Robby Rivenbark
+'''
+
 # import the necessary packages
 from collections import deque
 from imutils.video import VideoStream

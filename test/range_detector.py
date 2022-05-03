@@ -10,6 +10,10 @@
 # or
 # (python) range-detector --filter HSV --webcam
 
+
+'''
+    I DIDNT WRITE THIS I JUST STOLE IT FROM imutils
+'''
 import cv2
 import argparse
 from operator import xor

@@ -1,6 +1,5 @@
 '''
-    Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
-    horizontal position.
+    Tests seek function from vision controller. Currently it doesn't work but we're not using it anywhere right now.
 
     Author: Robby Rivenbark
 '''

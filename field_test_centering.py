@@ -1,5 +1,7 @@
 '''
-    Continuously reads in frames of video, commmands copter to change yaw rate based on ball 
+    Intention of this file is to demonstrate drone's ability to center horizontally on a target.
+    
+    Takes drone off to low altidude, continuously reads in frames of video, commmands copter to change yaw rate based on ball 
     horizontal position.
 
     Author: Robby Rivenbark
