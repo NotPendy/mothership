@@ -7,7 +7,7 @@
 **/terrain
 *.parm
 */__pycache__/
-*/robby_shell/
+robby_shell/
 */sitl.sh
 */*.AppImage
 
