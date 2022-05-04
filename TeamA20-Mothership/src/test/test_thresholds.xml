@@ -1,0 +1,54 @@
+<!-- Test thresholds, not for actual use and the numbers associated with them aren't particularly important.
+    Author: Robby Rivenbark
+-->
+
+<thresholds>
+    <dark_red>
+        <thresh_1>
+            <hmin>109</hmin>
+            <smin>112</smin>
+            <vmin>108</vmin>
+            <hmax>180</hmax>
+            <smax>166</smax>
+            <vmax>223</vmax>
+        </thresh_1>
+    
+        <thresh_2>
+            <hmin>134</hmin>
+            <smin>25</smin>
+            <vmin>53</vmin>
+            <hmax>196</hmax>
+            <smax>175</smax>
+            <vmax>103</vmax>
+        </thresh_2>
+
+        <thresh_3>
+            <hmin>0</hmin>
+            <smin>27</smin>
+            <vmin>176</vmin>
+            <hmax>73</hmax>
+            <smax>255</smax>
+            <vmax>255</vmax>
+        </thresh_3>
+    </dark_red>
+
+    <pink>
+        <thresh_1>
+            <hmin>11</hmin>
+            <smin>21</smin>
+            <vmin>31</vmin>
+            <hmax>41</hmax>
+            <smax>51</smax>
+            <vmax>61</vmax>
+        </thresh_1>
+    
+        <thresh_2>
+            <hmin>101</hmin>
+            <smin>201</smin>
+            <vmin>301</vmin>
+            <hmax>401</hmax>
+            <smax>501</smax>
+            <vmax>601</vmax>
+        </thresh_2>
+    </pink>
+</thresholds>

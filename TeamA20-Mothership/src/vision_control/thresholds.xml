@@ -1,0 +1,207 @@
+<!---
+    HSV thresholds for OpenCV to use to mask images.
+    One or multiple thresholds allowed for each color.
+
+    Author: Robby Rivenbark
+-->
+
+
+<thresholds>
+
+    <default>
+        
+        <!-- Optimized for testpic1 -->
+        <thresh_1>
+            <hmin>152</hmin>
+            <smin>111</smin>
+            <vmin>121</vmin>
+            <hmax>171</hmax>
+            <smax>170</smax>
+            <vmax>180</vmax>
+        </thresh_1>
+
+        <!-- Optimized for testpic2 -->
+        <thresh_2>
+            <hmin>155</hmin>
+            <smin>42</smin>
+            <vmin>175</vmin>
+            <hmax>171</hmax>
+            <smax>170</smax>
+            <vmax>255</vmax>
+        </thresh_2>
+
+        <!-- Optimized for testpic3 -->
+        <thresh_3>
+            <hmin>157</hmin>
+            <smin>47</smin>
+            <vmin>138</vmin>
+            <hmax>171</hmax>
+            <smax>159</smax>
+            <vmax>250</vmax>
+        </thresh_3>
+
+        <!-- Optimized for testpic4 -->
+        <thresh_4>
+            <hmin>148</hmin>
+            <smin>8</smin>
+            <vmin>232</vmin>
+            <hmax>171</hmax>
+            <smax>49</smax>
+            <vmax>255</vmax>
+        </thresh_4>
+
+        <!-- Optimized for testpic5 -->
+        <thresh_5>
+            <hmin>150</hmin>
+            <smin>30</smin>
+            <vmin>180</vmin>
+            <hmax>178</hmax>
+            <smax>165</smax>
+            <vmax>255</vmax>
+        </thresh_5>
+
+        <!-- Optimized for testpic6 -->
+        <thresh_6>
+            <hmin>168</hmin>
+            <smin>137</smin>
+            <vmin>126</vmin>
+            <hmax>190</hmax>
+            <smax>190</smax>
+            <vmax>157</vmax>
+        </thresh_6>
+
+        <!-- Optimized for testpic7 -->
+        <thresh_7>
+            <hmin>165</hmin>
+            <smin>135</smin>
+            <vmin>100</vmin>
+            <hmax>185</hmax>
+            <smax>180</smax>
+            <vmax>140</vmax>
+        </thresh_7>
+
+    </default>
+
+    <dark_red>
+        <thresh_1>
+            <hmin>140</hmin>
+            <smin>31</smin>
+            <vmin>126</vmin>
+            <hmax>169</hmax>
+            <smax>160</smax>
+            <vmax>255</vmax>
+        </thresh_1>
+    
+        <thresh_2>
+            <hmin>140</hmin>
+            <smin>69</smin>
+            <vmin>180</vmin>
+            <hmax>199</hmax>
+            <smax>170</smax>
+            <vmax>255</vmax>
+        </thresh_2>
+
+        <thresh_3>
+            <hmin>136</hmin>
+            <smin>65</smin>
+            <vmin>29</vmin>
+            <hmax>181</hmax>
+            <smax>255</smax>
+            <vmax>168</vmax>
+        </thresh_3>
+
+	<thresh_4>
+            <hmin>127</hmin>
+            <smin>92</smin>
+            <vmin>37</vmin>
+            <hmax>160</hmax>
+            <smax>171</smax>
+            <vmax>255</vmax>
+        </thresh_4>
+
+    </dark_red>
+
+    <pink>
+
+        <!-- Optimized for testpic1 -->
+        <thresh_1>
+            <hmin>152</hmin>
+            <smin>111</smin>
+            <vmin>121</vmin>
+            <hmax>171</hmax>
+            <smax>170</smax>
+            <vmax>180</vmax>
+        </thresh_1>
+
+        <!-- Optimized for testpic2 -->
+        <thresh_2>
+            <hmin>155</hmin>
+            <smin>42</smin>
+            <vmin>175</vmin>
+            <hmax>171</hmax>
+            <smax>170</smax>
+            <vmax>255</vmax>
+        </thresh_2>
+
+        <!-- Optimized for testpic3 -->
+        <thresh_3>
+            <hmin>157</hmin>
+            <smin>47</smin>
+            <vmin>138</vmin>
+            <hmax>171</hmax>
+            <smax>159</smax>
+            <vmax>250</vmax>
+        </thresh_3>
+
+        <!-- Optimized for testpic4 -->
+        <thresh_4>
+            <hmin>148</hmin>
+            <smin>8</smin>
+            <vmin>232</vmin>
+            <hmax>171</hmax>
+            <smax>49</smax>
+            <vmax>255</vmax>
+        </thresh_4>
+
+        <!-- Optimized for testpic5 -->
+        <thresh_5>
+            <hmin>150</hmin>
+            <smin>30</smin>
+            <vmin>180</vmin>
+            <hmax>178</hmax>
+            <smax>165</smax>
+            <vmax>255</vmax>
+        </thresh_5>
+
+        <!-- Optimized for testpic6 -->
+        <thresh_6>
+            <hmin>168</hmin>
+            <smin>137</smin>
+            <vmin>126</vmin>
+            <hmax>190</hmax>
+            <smax>190</smax>
+            <vmax>157</vmax>
+        </thresh_6>
+
+
+        <!-- Optimized for testpic7 -->
+        <thresh_7>
+            <hmin>165</hmin>
+            <smin>135</smin>
+            <vmin>100</vmin>
+            <hmax>185</hmax>
+            <smax>180</smax>
+            <vmax>140</vmax>
+        </thresh_7>
+    </pink>
+    <orange>
+        <thresh_222>
+            <hmin>3</hmin>
+            <smin>67</smin>
+            <vmin>109</vmin>
+            <hmax>21</hmax>
+            <smax>215</smax>
+            <vmax>169</vmax>
+        </thresh_222>
+    </orange>
+</thresholds>
