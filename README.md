@@ -20,3 +20,6 @@ ECE492/592 Mothership project
 ### Drone Dependencies (Pi and GCS)
 - `pip3 install dronekit`
 - `pip3 install pymavlink`
+
+### Additional Documentation
+`Commands.md`, `vision_control/about_vision_control.md`, `test/about_vision_testing.md`, comments in source code.
